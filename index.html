@@ -6,6 +6,18 @@
 </head>
 <link rel="stylesheet" href="style/main.css">
 <body>
+	<form action="" nosubmit>
+		Bridge Length (m)
+		<input type="text" name="bridge-length">
+		<br>
+		Car Weight (kN)
+		<input type="text" name="car-weight">
+		<br>
+		Car Length (m)
+		<input type="text" name="car-length">
+		<br>
+		<button onclick="return startSimulation();">Start Simulation</button>
+	</form>
 	<canvas id="c" width="500" height="500" style="border:1px solid #ccc"></canvas>
 	<script src="lib/fabric.min.js"></script>
 	<script src="scripts/main.js"></script>

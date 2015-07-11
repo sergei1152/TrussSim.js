@@ -1,5 +1,7 @@
-(function() {
-  var canvas = this.__canvas = new fabric.Canvas('c', { selection: false });
+  var canvas = new fabric.Canvas('c', { 
+    selection: true 
+  });
+
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
   function makeCircle(left, top, line1, line2, line3, line4) {
@@ -9,7 +11,8 @@
       strokeWidth: 5,
       radius: 12,
       fill: '#fff',
-      stroke: '#666'
+      stroke: '#666',
+      selectable: true
     });
     c.hasControls = c.hasBorders = false;
 
@@ -26,7 +29,7 @@
       fill: 'red',
       stroke: 'red',
       strokeWidth: 5,
-      selectable: false
+      selectable: true
     });
   }
 
@@ -57,4 +60,7 @@
     p.line4 && p.line4.set({ 'x1': p.left, 'y1': p.top });
     canvas.renderAll();
   });
-})();
+
+  function startSimulation(){
+    return false;
+  }
