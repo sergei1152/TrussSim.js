@@ -20,8 +20,14 @@
 		Grid Spacing
 		<input type="text" name="car-length" placeholder="6m">
 		<br>
-		<button onclick="return startSimulation();">Start Simulation</button>
+		
 	</form>
+	<button id='move-button'>Move</button>
+	<button id='add-node-button'>Add Node</button>
+	<button id='add-member-button'>Add Member</button>
+	<button id='eraser-button'>Eraser</button>
+
+	<button onclick="return startSimulation();">Start Simulation</button>
 	<canvas id="truss-canvas"></canvas>
 	<script src="lib/jquery-2.1.4.min.js"></script>
 	<script src="lib/fabric.min.js"></script>

@@ -1,4 +1,30 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+//Controlls the current mode
+var mode='move'; //starts up as the defualt node
+
+$('#eraser-button').on('click',function(){
+	mode='erase';
+	console.log(mode);
+});
+
+$('#move-button').on('click',function(){
+	mode='move';
+	console.log(mode);
+});
+
+$('#add-member-button').on('click',function(){
+	mode='add_member';
+	console.log(mode);
+});
+
+$('#add-node-button').on('click',function(){
+	mode='add_node';
+	console.log(mode);
+});
+
+module.exports.mode=mode;
+
+},{}],2:[function(require,module,exports){
 function Node(left, top,canv){
 	this.circle = new fabric.Circle({
       left: left,
@@ -33,7 +59,7 @@ Node.prototype.addMember=function(x1,y1,x2,y2){
 	Node.canvas.add(line);
 };
 module.exports=Node;
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports=function createGrid(canvas,grid_size){
 	//create the harizontal lines of the grid
   for(i=0;i<canvas.width;i+=grid_size){
@@ -51,14 +77,17 @@ module.exports=function createGrid(canvas,grid_size){
     }));
   }
 };
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
   var createGrid=require('./createGrid');
+  var ModeController=require('./ModeController');
+
   var Node=require('./Node');
   var grid_size = 50;//pixels per square
-
+  var mode='move';
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
+
 
   //Resizes the canvas to the window's full width
   window.addEventListener('resize', resizeCanvas, false);
@@ -152,4 +181,4 @@ module.exports=function createGrid(canvas,grid_size){
   function startSimulation(){
     return false;
   }
-},{"./Node":1,"./createGrid":2}]},{},[3]);
+},{"./ModeController":1,"./Node":2,"./createGrid":3}]},{},[4]);

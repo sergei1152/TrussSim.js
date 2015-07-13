@@ -1,10 +1,13 @@
   var createGrid=require('./createGrid');
+  var ModeController=require('./ModeController');
+
   var Node=require('./Node');
   var grid_size = 50;//pixels per square
-
+  var mode='move';
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
+
 
   //Resizes the canvas to the window's full width
   window.addEventListener('resize', resizeCanvas, false);
