@@ -1,8 +1,8 @@
 var Grid = {
     canvas: null,
     grid_size: 50,
-    min_grid_size:15,
-    lines: [],
+    min_grid_size:14,kkkkkk
+    lines: [], //to keep track of the lines created so they can be removed
 
     //Removes the current Grid
     removeGrid: function() {
@@ -23,6 +23,7 @@ var Grid = {
             });
             Grid.lines.push(line);
             Grid.canvas.add(line);
+            Grid.canvas.sendToBack(line);
         }
 
         //create the vertical lines of the grid
@@ -33,20 +34,19 @@ var Grid = {
             });
             Grid.lines.push(line);
             Grid.canvas.add(line);
+            Grid.canvas.sendToBack(line);
         }
-    },
-
-    //Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
-    monitor: function() {
-        $('#grid-size-input').change(function() {
-            var new_grid_size = parseInt($('#grid-size-input').val());
-
-            if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
-                Grid.grid_size = new_grid_size;
-                Grid.createGrid();
-            }
-        });
     }
 };
+
+//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
+$('#grid-size-input').change(function() {
+    var new_grid_size = parseInt($('#grid-size-input').val());
+
+    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
+        Grid.grid_size = new_grid_size;
+        Grid.createGrid();
+    }
+});
 
 module.exports = Grid;

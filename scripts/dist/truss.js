@@ -2,8 +2,8 @@
 var Grid = {
     canvas: null,
     grid_size: 50,
-    min_grid_size:15,
-    lines: [],
+    min_grid_size:14,
+    lines: [], //to keep track of the lines created so they can be removed
 
     //Removes the current Grid
     removeGrid: function() {
@@ -24,6 +24,7 @@ var Grid = {
             });
             Grid.lines.push(line);
             Grid.canvas.add(line);
+            Grid.canvas.sendToBack(line);
         }
 
         //create the vertical lines of the grid
@@ -34,21 +35,20 @@ var Grid = {
             });
             Grid.lines.push(line);
             Grid.canvas.add(line);
+            Grid.canvas.sendToBack(line);
         }
-    },
-
-    //Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
-    monitor: function() {
-        $('#grid-size-input').change(function() {
-            var new_grid_size = parseInt($('#grid-size-input').val());
-
-            if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
-                Grid.grid_size = new_grid_size;
-                Grid.createGrid();
-            }
-        });
     }
 };
+
+//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
+$('#grid-size-input').change(function() {
+    var new_grid_size = parseInt($('#grid-size-input').val());
+
+    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
+        Grid.grid_size = new_grid_size;
+        Grid.createGrid();
+    }
+});
 
 module.exports = Grid;
 },{}],2:[function(require,module,exports){
@@ -109,116 +109,126 @@ Node.prototype.addMember=function(x1,y1,x2,y2){
 };
 module.exports=Node;
 },{}],4:[function(require,module,exports){
-//Handles Resizing of the canvas
-module.exports=function ResizeController(canvas){
-	this.canvas=canvas;
-	//Resizes the canvas to the window's full width
-  $(window).on('resize',function(){
-  	this.resizeCanvas();
-  });
+var ResizeController={
+	canvas: null,
+	grid: null,
+	initial:true,
+	resize_grid: true, //whether the grid should be regenerated after a resize event
 
-  this.resizeCanvas=function(){
-  	this.canvas.setHeight($(window).height()-120);
-    this.canvas.setWidth($(window).width()-2);
-    this.canvas.renderAll();
-  };
+	//resizes canvas based on current and future window dimensions, as well as resizes the grid
+	resizeCanvas: function(){
+		if(ResizeController.canvas){
+			ResizeController.canvas.setHeight($(window).height()-120);
+	    	ResizeController.canvas.setWidth($(window).width()-2);
+	    	ResizeController.canvas.renderAll();
+		}
 
-  this.resizeCanvas();
+		if(ResizeController.grid && (ResizeController.resize_grid || ResizeController.initial)){
+	    	ResizeController.grid.createGrid();
+	    	ResizeController.initial=false;
+	    }
+	}
 };
-},{}],5:[function(require,module,exports){
-  
-  var ModeController=require('./ModeController');
-  var ResizeController=require('./ResizeController');
-  var Node=require('./Node'); //the node object
+//Resizes the canvas and grid upon a window resize
+$(window).on('resize',function(){
+	ResizeController.resizeCanvas();
+});
 
-  var canvas = new fabric.Canvas('truss-canvas', { 
-    selection: true 
+module.exports=ResizeController;
+},{}],5:[function(require,module,exports){
+  var ModeController = require('./ModeController');
+  var Node = require('./Node');
+  var Grid = require('./Grid');
+  var ResizeController = require('./ResizeController');
+
+  var canvas = new fabric.Canvas('truss-canvas', {
+      selection: true
   });
 
-  var resizeController=new ResizeController(canvas); //resizes the canvas everytime the window changes, as well as performs an initial resize
-  
-  //Setting up the grid
-  var Grid=require('./Grid');
-  Grid.canvas=canvas;
-  Grid.createGrid();
-  Grid.monitor(); 
+  Grid.canvas = canvas;
+  ResizeController.canvas = canvas;
+  ResizeController.grid = Grid;
+  ResizeController.resizeCanvas(); //creates the grid as well, and recreates it upon a window resize 
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
-	
-  var node=new Node(50,50,canvas);
-  node.addMember(5,6,8,11);
- 
-  // function makeCircle(left, top, line1, line2, line3, line4) {
-  //   var c = new fabric.Circle({
-  //     left: left,
-  //     top: top,
-  //     strokeWidth: 5,
-  //     radius: 12,
-  //     fill: '#fff',
-  //     stroke: '#666',
-  //     selectable: true
-  //   });
-  //   c.hasControls = c.hasBorders = false;
 
-  //   c.line1 = line1;
-  //   c.line2 = line2;
-  //   c.line3 = line3;
-  //   c.line4 = line4;
+  var node = new Node(50, 50, canvas);
+  node.addMember(5, 6, 8, 11);
 
-  //   return c;
-  // }
+   // function makeCircle(left, top, line1, line2, line3, line4) {
+   //   var c = new fabric.Circle({
+   //     left: left,
+   //     top: top,
+   //     strokeWidth: 5,
+   //     radius: 12,
+   //     fill: '#fff',
+   //     stroke: '#666',
+   //     selectable: true
+   //   });
+   //   c.hasControls = c.hasBorders = false;
 
-  // function makeLine(coords) {
-  //   return new fabric.Line(coords, {
-  //     fill: 'red',
-  //     stroke: 'blue',
-  //     strokeWidth: 5,
-  //     selectable: false
-  //   });
-  // }
+   //   c.line1 = line1;
+   //   c.line2 = line2;
+   //   c.line3 = line3;
+   //   c.line4 = line4;
 
-  // var line = makeLine([ 250, 125, 250, 175 ]),
-  //     line2 = makeLine([ 250, 175, 250, 250 ]),
-  //     line3 = makeLine([ 250, 250, 300, 350]),
-  //     line4 = makeLine([ 250, 250, 200, 350]),
-  //     line5 = makeLine([ 250, 175, 175, 225 ]),
-  //     line6 = makeLine([ 250, 175, 325, 225 ]);
+   //   return c;
+   // }
 
-  // canvas.add(line, line2, line3, line4, line5, line6);
-  // canvas.add(Node(5,5));
-  // canvas.add(
-  //   makeCircle(line.get('x1'), line.get('y1'), null, line),
-  //   makeCircle(line.get('x2'), line.get('y2'), line, line2, line5, line6),
-  //   makeCircle(line2.get('x2'), line2.get('y2'), line2, line3, line4),
-  //   makeCircle(line3.get('x2'), line3.get('y2'), line3),
-  //   makeCircle(line4.get('x2'), line4.get('y2'), line4),
-  //   makeCircle(line5.get('x2'), line5.get('y2'), line5),
-  //   makeCircle(line6.get('x2'), line6.get('y2'), line6)
-  // );
+   // function makeLine(coords) {
+   //   return new fabric.Line(coords, {
+   //     fill: 'red',
+   //     stroke: 'blue',
+   //     strokeWidth: 5,
+   //     selectable: false
+   //   });
+   // }
+
+   // var line = makeLine([ 250, 125, 250, 175 ]),
+   //     line2 = makeLine([ 250, 175, 250, 250 ]),
+   //     line3 = makeLine([ 250, 250, 300, 350]),
+   //     line4 = makeLine([ 250, 250, 200, 350]),
+   //     line5 = makeLine([ 250, 175, 175, 225 ]),
+   //     line6 = makeLine([ 250, 175, 325, 225 ]);
+
+   // canvas.add(line, line2, line3, line4, line5, line6);
+   // canvas.add(Node(5,5));
+   // canvas.add(
+   //   makeCircle(line.get('x1'), line.get('y1'), null, line),
+   //   makeCircle(line.get('x2'), line.get('y2'), line, line2, line5, line6),
+   //   makeCircle(line2.get('x2'), line2.get('y2'), line2, line3, line4),
+   //   makeCircle(line3.get('x2'), line3.get('y2'), line3),
+   //   makeCircle(line4.get('x2'), line4.get('y2'), line4),
+   //   makeCircle(line5.get('x2'), line5.get('y2'), line5),
+   //   makeCircle(line6.get('x2'), line6.get('y2'), line6)
+   // );
   canvas.on('object:moving', function(e) {
-    var target = e.target;
-    
-    if(target.type==='circle'){
-    	for (var i=0;i<target.connected_members.length;i++){
-    		target.connected_members[i].set({'x1':target.left,'y1':target.top});
-    	} 
-    }
-    // if(p.line1){
-    // 	p.line1.set({ 'x2': p.left, 'y2': p.top });
-    // }
-    // if(p.line2){
-    // 	p.line2.set({ 'x1': p.left, 'y1': p.top });
-    // }
-    // if(p.line3){
-    // 	p.line3.set({ 'x1': p.left, 'y1': p.top });
-    // }
-    // if(p.line4){
-    // 	p.line4.set({ 'x1': p.left, 'y1': p.top });
-    // }
-    canvas.renderAll();
+      var target = e.target;
+
+      if (target.type === 'circle') {
+          for (var i = 0; i < target.connected_members.length; i++) {
+              target.connected_members[i].set({
+                  'x1': target.left,
+                  'y1': target.top
+              });
+          }
+      }
+      // if(p.line1){
+      // 	p.line1.set({ 'x2': p.left, 'y2': p.top });
+      // }
+      // if(p.line2){
+      // 	p.line2.set({ 'x1': p.left, 'y1': p.top });
+      // }
+      // if(p.line3){
+      // 	p.line3.set({ 'x1': p.left, 'y1': p.top });
+      // }
+      // if(p.line4){
+      // 	p.line4.set({ 'x1': p.left, 'y1': p.top });
+      // }
+      canvas.renderAll();
   });
 
-  function startSimulation(){
-    return false;
+  function startSimulation() {
+      return false;
   }
 },{"./Grid":1,"./ModeController":2,"./Node":3,"./ResizeController":4}]},{},[5]);

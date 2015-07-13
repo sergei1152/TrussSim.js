@@ -1,16 +1,26 @@
-//Handles Resizing of the canvas
-module.exports=function ResizeController(canvas){
-	this.canvas=canvas;
-	//Resizes the canvas to the window's full width
-  $(window).on('resize',function(){
-  	this.resizeCanvas();
-  });
+var ResizeController={
+	canvas: null,
+	grid: null,
+	initial:true,
+	resize_grid: true, //whether the grid should be regenerated after a resize event
 
-  this.resizeCanvas=function(){
-  	this.canvas.setHeight($(window).height()-120);
-    this.canvas.setWidth($(window).width()-2);
-    this.canvas.renderAll();
-  };
+	//resizes canvas based on current and future window dimensions, as well as resizes the grid
+	resizeCanvas: function(){
+		if(ResizeController.canvas){
+			ResizeController.canvas.setHeight($(window).height()-120);
+	    	ResizeController.canvas.setWidth($(window).width()-2);
+	    	ResizeController.canvas.renderAll();
+		}
 
-  this.resizeCanvas();
+		if(ResizeController.grid && (ResizeController.resize_grid || ResizeController.initial)){
+	    	ResizeController.grid.createGrid();
+	    	ResizeController.initial=false;
+	    }
+	}
 };
+//Resizes the canvas and grid upon a window resize
+$(window).on('resize',function(){
+	ResizeController.resizeCanvas();
+});
+
+module.exports=ResizeController;
