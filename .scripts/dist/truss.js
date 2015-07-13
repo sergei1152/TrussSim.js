@@ -1,4 +1,29 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports=function Node(left, top){
+	var circle = new fabric.Circle({
+      left: left,
+      top: top,
+      strokeWidth: 5,
+      radius: 12,
+      fill: '#fff',
+      stroke: '#666',
+      selectable: true
+    });
+    circle.hasControls = circle.hasBorders = false;
+    c.connected_members=[];
+
+    return circle;
+};
+
+Node.prototype.addMember=function(x1,y1,x2,y2){
+	c.connected_members.push(new fabric.Line([x1,y1,x2,y2],{
+	  fill: 'red',
+      stroke: 'red',
+      strokeWidth: 5,
+      selectable: false
+	}));
+};
+},{}],2:[function(require,module,exports){
 module.exports=function createGrid(canvas,grid_size){
 	//create the harizontal lines of the grid
   for(i=0;i<canvas.width;i+=grid_size){
@@ -16,9 +41,10 @@ module.exports=function createGrid(canvas,grid_size){
     }));
   }
 };
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
   var createGrid=require('./createGrid');
-  var grid_size = 15; //pixels per square
+  var Node=require('./Node');
+  var grid_size = 50;//pixels per square
 
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
@@ -62,10 +88,10 @@ module.exports=function createGrid(canvas,grid_size){
 
   function makeLine(coords) {
     return new fabric.Line(coords, {
-      fill: 'red',
+      fill: 'blue',
       stroke: 'red',
       strokeWidth: 5,
-      selectable: true
+      selectable: false
     });
   }
 
@@ -77,7 +103,7 @@ module.exports=function createGrid(canvas,grid_size){
       line6 = makeLine([ 250, 175, 325, 225 ]);
 
   canvas.add(line, line2, line3, line4, line5, line6);
-
+  canvas.add(makeCircle(line.get('x1'), line.get('y1'), null, line));
   canvas.add(
     makeCircle(line.get('x1'), line.get('y1'), null, line),
     makeCircle(line.get('x2'), line.get('y2'), line, line2, line5, line6),
@@ -87,9 +113,9 @@ module.exports=function createGrid(canvas,grid_size){
     makeCircle(line5.get('x2'), line5.get('y2'), line5),
     makeCircle(line6.get('x2'), line6.get('y2'), line6)
   );
-
   canvas.on('object:moving', function(e) {
     var p = e.target;
+    console.log(p);
     if(p.line1){
     	p.line1.set({ 'x2': p.left, 'y2': p.top });
     }
@@ -108,4 +134,4 @@ module.exports=function createGrid(canvas,grid_size){
   function startSimulation(){
     return false;
   }
-},{"./createGrid":1}]},{},[2]);
+},{"./Node":1,"./createGrid":2}]},{},[3]);
