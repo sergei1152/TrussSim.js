@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports=function createGrid(canvas,grid_size){
 	//create the harizontal lines of the grid
-  for(var i=0;i<canvas.width;i+=grid_size){
+  for(i=0;i<canvas.width;i+=grid_size){
     canvas.add(new fabric.Line([i,0,i,canvas.height*2],{ 
       stroke: '#ccc', 
       selectable: false
@@ -9,13 +9,13 @@ module.exports=function createGrid(canvas,grid_size){
   }
 
   //create the vertical lines of the grid
-  for(var i=0;i<canvas.height;i+=grid_size){
+  for(i=0;i<canvas.height;i+=grid_size){
     canvas.add(new fabric.Line([0,i,canvas.width*2,i],{ 
       stroke: '#ccc', 
       selectable: false
     }));
   }
-}
+};
 },{}],2:[function(require,module,exports){
   var createGrid=require('./createGrid');
   var grid_size = 15; //pixels per square
@@ -90,10 +90,18 @@ module.exports=function createGrid(canvas,grid_size){
 
   canvas.on('object:moving', function(e) {
     var p = e.target;
-    p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top });
-    p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top });
-    p.line3 && p.line3.set({ 'x1': p.left, 'y1': p.top });
-    p.line4 && p.line4.set({ 'x1': p.left, 'y1': p.top });
+    if(p.line1){
+    	p.line1.set({ 'x2': p.left, 'y2': p.top });
+    }
+    if(p.line2){
+    	p.line2.set({ 'x1': p.left, 'y1': p.top });
+    }
+    if(p.line3){
+    	p.line3.set({ 'x1': p.left, 'y1': p.top });
+    }
+    if(p.line4){
+    	p.line4.set({ 'x1': p.left, 'y1': p.top });
+    }
     canvas.renderAll();
   });
 
