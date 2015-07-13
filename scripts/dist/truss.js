@@ -18,8 +18,7 @@ module.exports=function createGrid(canvas,grid_size){
 }
 },{}],2:[function(require,module,exports){
   var createGrid=require('./createGrid');
-  var grid_size = 15; //pixels per square
-
+  var grid_size = 50; //pixels per square
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
