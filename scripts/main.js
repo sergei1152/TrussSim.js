@@ -1,6 +1,45 @@
-  var canvas = new fabric.Canvas('c', { 
+  var grid_size = 50; //pixels per square
+
+  var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
+
+  //Resizes the canvas to the window's full width
+  window.addEventListener('resize', resizeCanvas, false);
+
+  function resizeCanvas() {
+    canvas.setHeight($(window).height()-120);
+    canvas.setWidth(window.innerWidth-2);
+    canvas.renderAll();
+  }
+
+  // resize on init
+  resizeCanvas();
+
+  var canvas_height=$('#truss-canvas').height();
+  var canvas_width=$('#truss-canvas').width();
+  console.log(canvas_height);
+
+  //create the harizontal lines of the grid
+  for(var i=0;i<canvas_width;i+=grid_size){
+    canvas.add(new fabric.Line([i,0,i,canvas_height*2],{ 
+      stroke: '#ccc', 
+      selectable: false
+    }));
+  }
+
+  //create the vertical lines of the grid
+  for(var i=0;i<canvas_height;i+=grid_size){
+    canvas.add(new fabric.Line([0,i,canvas_width*2,i],{ 
+      stroke: '#ccc', 
+      selectable: false
+    }));
+  }
+  // // create grid
+  // for (var i = 0; i < (600 / grid); i++) {
+  //   canvas.add(new fabric.Line([ i * grid, 0, i * grid, 600], { stroke: '#ccc', selectable: false }));
+  //   canvas.add(new fabric.Line([ 0, i * grid, 600, i * grid], { stroke: '#ccc', selectable: false }))
+  // }
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 

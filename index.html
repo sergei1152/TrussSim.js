@@ -6,19 +6,24 @@
 </head>
 <link rel="stylesheet" href="style/main.css">
 <body>
+
 	<form action="" nosubmit>
 		Bridge Length (m)
-		<input type="text" name="bridge-length">
+		<input type="text" name="bridge-length" placeholder="15m">
 		<br>
 		Car Weight (kN)
-		<input type="text" name="car-weight">
+		<input type="text" name="car-weight" placeholder="7.5kN">
 		<br>
 		Car Length (m)
-		<input type="text" name="car-length">
+		<input type="text" name="car-length" placeholder="6m">
+		<br>
+		Grid Spacing
+		<input type="text" name="car-length" placeholder="6m">
 		<br>
 		<button onclick="return startSimulation();">Start Simulation</button>
 	</form>
-	<canvas id="c" width="500" height="500" style="border:1px solid #ccc"></canvas>
+	<canvas id="truss-canvas"></canvas>
+	<script src="lib/jquery-2.1.4.min.js"></script>
 	<script src="lib/fabric.min.js"></script>
 	<script src="scripts/main.js"></script>
 </body>
