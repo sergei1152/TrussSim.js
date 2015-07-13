@@ -1,30 +1,79 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var Grid = {
+    canvas: null,
+    grid_size: 50,
+    min_grid_size:15,
+    lines: [],
+
+    //Removes the current Grid
+    removeGrid: function() {
+        for (var i = 0; i < Grid.lines.length; i++) {
+            Grid.canvas.remove(Grid.lines[i]);
+        }
+    },
+
+    //Removes the current grid and recreates it based on the grid size
+    createGrid: function() {
+        Grid.removeGrid();
+        var line;
+        //create the harizontal lines of the grid
+        for (i = 0; i < this.canvas.width; i += this.grid_size) {
+            line = new fabric.Line([i, 0, i, this.canvas.height * 2], {
+                stroke: '#ccc',
+                selectable: false
+            });
+            Grid.lines.push(line);
+            Grid.canvas.add(line);
+        }
+
+        //create the vertical lines of the grid
+        for (i = 0; i < Grid.canvas.height; i += Grid.grid_size) {
+            line = new fabric.Line([0, i, Grid.canvas.width * 2, i], {
+                stroke: '#ccc',
+                selectable: false
+            });
+            Grid.lines.push(line);
+            Grid.canvas.add(line);
+        }
+    },
+
+    //Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
+    monitor: function() {
+        $('#grid-size-input').change(function() {
+            var new_grid_size = parseInt($('#grid-size-input').val());
+
+            if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
+                Grid.grid_size = new_grid_size;
+                Grid.createGrid();
+            }
+        });
+    }
+};
+
+module.exports = Grid;
+},{}],2:[function(require,module,exports){
 //Controlls the current mode
 var mode='move'; //starts up as the defualt node
 
 $('#eraser-button').on('click',function(){
 	mode='erase';
-	console.log(mode);
 });
 
 $('#move-button').on('click',function(){
 	mode='move';
-	console.log(mode);
 });
 
 $('#add-member-button').on('click',function(){
 	mode='add_member';
-	console.log(mode);
 });
 
 $('#add-node-button').on('click',function(){
 	mode='add_node';
-	console.log(mode);
 });
 
 module.exports.mode=mode;
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 function Node(left, top,canv){
 	this.circle = new fabric.Circle({
       left: left,
@@ -59,52 +108,43 @@ Node.prototype.addMember=function(x1,y1,x2,y2){
 	Node.canvas.add(line);
 };
 module.exports=Node;
-},{}],3:[function(require,module,exports){
-module.exports=function createGrid(canvas,grid_size){
-	//create the harizontal lines of the grid
-  for(i=0;i<canvas.width;i+=grid_size){
-    canvas.add(new fabric.Line([i,0,i,canvas.height*2],{ 
-      stroke: '#ccc', 
-      selectable: false
-    }));
-  }
-
-  //create the vertical lines of the grid
-  for(i=0;i<canvas.height;i+=grid_size){
-    canvas.add(new fabric.Line([0,i,canvas.width*2,i],{ 
-      stroke: '#ccc', 
-      selectable: false
-    }));
-  }
-};
 },{}],4:[function(require,module,exports){
-  var createGrid=require('./createGrid');
-  var ModeController=require('./ModeController');
+//Handles Resizing of the canvas
+module.exports=function ResizeController(canvas){
+	this.canvas=canvas;
+	//Resizes the canvas to the window's full width
+  $(window).on('resize',function(){
+  	this.resizeCanvas();
+  });
 
-  var Node=require('./Node');
-  var grid_size = 50;//pixels per square
-  var mode='move';
+  this.resizeCanvas=function(){
+  	this.canvas.setHeight($(window).height()-120);
+    this.canvas.setWidth($(window).width()-2);
+    this.canvas.renderAll();
+  };
+
+  this.resizeCanvas();
+};
+},{}],5:[function(require,module,exports){
+  
+  var ModeController=require('./ModeController');
+  var ResizeController=require('./ResizeController');
+  var Node=require('./Node'); //the node object
+
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
 
-
-  //Resizes the canvas to the window's full width
-  window.addEventListener('resize', resizeCanvas, false);
-
-  function resizeCanvas() {
-    canvas.setHeight($(window).height()-120);
-    canvas.setWidth(window.innerWidth-2);
-    canvas.renderAll();
-  }
-
-  // resize on init
-  resizeCanvas();
-
-  createGrid(canvas,grid_size);
+  var resizeController=new ResizeController(canvas); //resizes the canvas everytime the window changes, as well as performs an initial resize
+  
+  //Setting up the grid
+  var Grid=require('./Grid');
+  Grid.canvas=canvas;
+  Grid.createGrid();
+  Grid.monitor(); 
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
-
+	
   var node=new Node(50,50,canvas);
   node.addMember(5,6,8,11);
  
@@ -181,4 +221,4 @@ module.exports=function createGrid(canvas,grid_size){
   function startSimulation(){
     return false;
   }
-},{"./ModeController":1,"./Node":2,"./createGrid":3}]},{},[4]);
+},{"./Grid":1,"./ModeController":2,"./Node":3,"./ResizeController":4}]},{},[5]);

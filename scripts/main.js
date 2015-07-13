@@ -1,30 +1,22 @@
-  var createGrid=require('./createGrid');
+  
   var ModeController=require('./ModeController');
+  var ResizeController=require('./ResizeController');
+  var Node=require('./Node'); //the node object
 
-  var Node=require('./Node');
-  var grid_size = 50;//pixels per square
-  var mode='move';
   var canvas = new fabric.Canvas('truss-canvas', { 
     selection: true 
   });
 
-
-  //Resizes the canvas to the window's full width
-  window.addEventListener('resize', resizeCanvas, false);
-
-  function resizeCanvas() {
-    canvas.setHeight($(window).height()-120);
-    canvas.setWidth(window.innerWidth-2);
-    canvas.renderAll();
-  }
-
-  // resize on init
-  resizeCanvas();
-
-  createGrid(canvas,grid_size);
+  var resizeController=new ResizeController(canvas); //resizes the canvas everytime the window changes, as well as performs an initial resize
+  
+  //Setting up the grid
+  var Grid=require('./Grid');
+  Grid.canvas=canvas;
+  Grid.createGrid();
+  Grid.monitor(); 
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
-
+	
   var node=new Node(50,50,canvas);
   node.addMember(5,6,8,11);
  
