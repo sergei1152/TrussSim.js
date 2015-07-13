@@ -14,9 +14,9 @@ function Node(left, top,canv){
     this.circle.connected_members=[];
 
     if(canv){
-		Node.canvas=canv;
-		Node.canvas.add(this.circle);
-	}
+        Node.canvas = canv;
+        Node.canvas.add(this.circle);
+    }
 
     return this;
 }

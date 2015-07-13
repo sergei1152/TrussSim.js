@@ -7,6 +7,7 @@
       selection: true
   });
 
+  ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;
   ResizeController.grid = Grid;
@@ -14,7 +15,20 @@
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
-  
+  canvas.on('mouse:move', function(event) {
+      if (ModeController.mode === 'add_node') {
+      	ModeController.new_node.circle.set({'left':event.e.x,'top':event.e.y-105});
+      	canvas.renderAll();
+      }
+  });
+
+  canvas.on('mouse:up', function(event) {
+  	console.log('mouse up');
+      if (ModeController.mode === 'add_node') {
+      	ModeController.new_node=new Node(event.e.x,event.e.y-105, canvas);
+      	canvas.add(ModeController.new_node.circle);
+      }
+  });
   var node = new Node(50, 50, canvas);
   node.addMember(5, 6, 8, 11);
 

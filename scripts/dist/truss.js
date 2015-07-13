@@ -52,28 +52,35 @@ $('#grid-size-input').change(function() {
 
 module.exports = Grid;
 },{}],2:[function(require,module,exports){
+var Node=require('./Node');
 //Controlls the current mode
-var mode='move'; //starts up as the defualt node
+var ModeController={
+	canvas: null,
+	mode: 'move',
+	new_node:null
+};
 
 $('#eraser-button').on('click',function(){
-	mode='erase';
+	ModeController.mode='erase';
 });
 
 $('#move-button').on('click',function(){
-	mode='move';
+	ModeController.mode='move';
 });
 
 $('#add-member-button').on('click',function(){
-	mode='add_member';
+	ModeController.mode='add_member';
 });
 
 $('#add-node-button').on('click',function(){
-	mode='add_node';
+	ModeController.mode='add_node';
+	ModeController.new_node=new Node(-100,-100, ModeController.canvas);
+	ModeController.canvas.add(ModeController.new_node.circle);
 });
 
-module.exports.mode=mode;
+module.exports=ModeController;
 
-},{}],3:[function(require,module,exports){
+},{"./Node":3}],3:[function(require,module,exports){
 function Node(left, top,canv){
 	this.circle = new fabric.Circle({
       left: left,
@@ -90,9 +97,9 @@ function Node(left, top,canv){
     this.circle.connected_members=[];
 
     if(canv){
-		Node.canvas=canv;
-		Node.canvas.add(this.circle);
-	}
+        Node.canvas = canv;
+        Node.canvas.add(this.circle);
+    }
 
     return this;
 }
@@ -145,6 +152,7 @@ module.exports=ResizeController;
       selection: true
   });
 
+  ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;
   ResizeController.grid = Grid;
@@ -152,6 +160,20 @@ module.exports=ResizeController;
 
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
+  canvas.on('mouse:move', function(event) {
+      if (ModeController.mode === 'add_node') {
+      	ModeController.new_node.circle.set({'left':event.e.x,'top':event.e.y-105});
+      	canvas.renderAll();
+      }
+  });
+
+  canvas.on('mouse:up', function(event) {
+  	console.log('mouse up');
+      if (ModeController.mode === 'add_node') {
+      	ModeController.new_node=new Node(event.e.x,event.e.y-105, canvas);
+      	canvas.add(ModeController.new_node.circle);
+      }
+  });
   var node = new Node(50, 50, canvas);
   node.addMember(5, 6, 8, 11);
 

@@ -1,20 +1,27 @@
+var Node=require('./Node');
 //Controlls the current mode
-var mode='move'; //starts up as the defualt node
+var ModeController={
+	canvas: null,
+	mode: 'move',
+	new_node:null
+};
 
 $('#eraser-button').on('click',function(){
-	mode='erase';
+	ModeController.mode='erase';
 });
 
 $('#move-button').on('click',function(){
-	mode='move';
+	ModeController.mode='move';
 });
 
 $('#add-member-button').on('click',function(){
-	mode='add_member';
+	ModeController.mode='add_member';
 });
 
 $('#add-node-button').on('click',function(){
-	mode='add_node';
+	ModeController.mode='add_node';
+	ModeController.new_node=new Node(-100,-100, ModeController.canvas);
+	ModeController.canvas.add(ModeController.new_node.circle);
 });
 
-module.exports.mode=mode;
+module.exports=ModeController;

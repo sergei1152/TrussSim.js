@@ -1,7 +1,7 @@
 var Grid = {
     canvas: null,
     grid_size: 50,
-    min_grid_size:14,kkkkkk
+    min_grid_size:14,
     lines: [], //to keep track of the lines created so they can be removed
 
     //Removes the current Grid
