@@ -9,7 +9,6 @@ function Node(left, top,canv){
       selectable: true
     });
 
-
     this.circle.hasControls = this.circle.hasBorders = false;
     this.circle.connected_members=[];
 
@@ -21,15 +20,5 @@ function Node(left, top,canv){
     
     return this;
 }
-Node.prototype.addMember=function(x1,y1,x2,y2){
-	var line=new fabric.Line([this.circle.left,this.circle.top,x1,y1],{
-	  fill: 'red',
-      stroke: 'red',
-      strokeWidth: 5,
-      selectable: false
-	});
 
-	this.circle.connected_members.push(line);
-	Node.canvas.add(line);
-};
 module.exports=Node;

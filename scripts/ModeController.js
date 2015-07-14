@@ -13,28 +13,37 @@ var ModeController={
 			ModeController.canvas.remove(ModeController.new_node.circle);
 			ModeController.new_node=null;
 		}
+	},
+	clearMember:function(){
+		if(ModeController.new_member){
+			ModeController.canvas.remove(ModeController.new_member.line);
+			ModeController.new_member=null;
+		}
 	}
 };
 
 $('#eraser-button').on('click',function(){
 	ModeController.mode='erase';
 	ModeController.clearNode();
+	ModeController.clearMember();
 });
 
 $('#move-button').on('click',function(){
 	ModeController.mode='move';
 	ModeController.clearNode();
+	ModeController.clearMember();
 });
 
 $('#add-member-button').on('click',function(){
+	ModeController.clearNode(); 
 	if(ModeController.mode!=='add_member'){ //if not already in add-member mode
 		ModeController.mode='add_member';
-		ModeController.clearNode(); 
 		ModeController.new_member=new Member(-100,-100, ModeController.canvas);
 	}
 });
 
 $('#add-node-button').on('click',function(){
+	ModeController.clearMember();
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
 		ModeController.new_node=new Node(-100,-100, ModeController.canvas);
 		ModeController.mode='add_node';

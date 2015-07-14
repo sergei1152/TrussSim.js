@@ -1,4 +1,5 @@
   var ModeController = require('./ModeController');
+  var InteractionController=require('./InteractionController');
   var Node = require('./Node');
   var Member=require('./Member');
   var Grid = require('./Grid');
@@ -7,6 +8,9 @@
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
+  
+  //So that all fabric objects have an origin along the center
+  fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
   ModeController.canvas = canvas;
   Grid.canvas = canvas;
@@ -14,85 +18,21 @@
   ResizeController.grid = Grid;
   ResizeController.resizeCanvas(); //creates the grid as well, and recreates it upon a window resize 
 
-  fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
-  canvas.on('mouse:move', function(event) {
-      if (ModeController.mode === 'add_node') {
-          ModeController.new_node.circle.set({
-              'left': event.e.x,
-              'top': event.e.y - 105
-          });
-          canvas.renderAll();
-      }
-      if (ModeController.mode === 'add_member' && (ModeController.new_member.placedStart && !ModeController.new_member.placedEnd)) {
-          ModeController.new_member.line.set({
-              'x2': event.e.x,
-              'y2': event.e.y - 105
-          });
-          canvas.renderAll();
-      }
-  });
+  InteractionController(canvas, ModeController);
 
-  canvas.on('mouse:up', function(event) {
-      if (ModeController.mode === 'add_node') {
-          //for some reason have to remove and re-add node to avoid weird glitcheness
-          canvas.remove(ModeController.new_node.circle);
-          canvas.add(ModeController.new_node.circle);
-          canvas.bringToFront(ModeController.new_node.circle);
-          ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas);
-      }
-     
-  });
-
-  //For the eraser tool
-  canvas.on('object:selected', function(event) {
-      if (ModeController.mode === 'erase') {
-          canvas.remove(event.target);
-      }
-     else if (ModeController.mode === 'add_member') {
-        if(event.target.type==='circle'){
-          if(!ModeController.new_member.placedStart){
-            ModeController.new_member.line.set({x1: event.target.left,y1: event.target.top}); //position the start of the member to be at the center of the node
-            ModeController.new_member.placedStart=true;
-          }
-          else{
-            ModeController.new_member.line.set({x2: event.target.left,y2: event.target.top}); //position the start of the member to be at the center of the node
-            ModeController.new_member.placedEnd=true;
-            canvas.remove(ModeController.new_member.line);
-            canvas.add(ModeController.new_member.line);
-            ModeController.new_member=new Member(-100,-100,canvas);
-          }
-        }
-    }
-  });
-
-  var previous_fill='grey';
-  var hover_fill = 'red';
-  canvas.on('mouse:over', function(e) {
-      if (ModeController.mode === 'erase') {
-          previous_fill = e.target.getFill();
-          e.target.setFill(hover_fill);
-          canvas.renderAll();
-      }
-  });
-
-  canvas.on('mouse:out', function(e) {
-      if (ModeController.mode === 'erase') {
-          e.target.setFill(previous_fill);
-          canvas.renderAll();
-      }
-  });
-
-  $('#redraw').on('click', function() {
-      canvas.renderAll();
-      canvas.calcOffset();
-      console.log('redraw');
-  });
 
   
-  var node = new Node(50, 50, canvas);
-  node.addMember(5, 6, 8, 11);
+  // var node = new Node(50, 50, canvas);
+  // node.addMember(5, 6, 8, 11);
 
+
+  // //The redraw button
+  // $('#redraw').on('click', function() {
+  //     canvas.renderAll();
+  //     canvas.calcOffset();
+  //     console.log('redraw');
+  // });
    // function makeCircle(left, top, line1, line2, line3, line4) {
    //   var c = new fabric.Circle({
    //     left: left,
@@ -140,17 +80,17 @@
    //   makeCircle(line5.get('x2'), line5.get('y2'), line5),
    //   makeCircle(line6.get('x2'), line6.get('y2'), line6)
    // );
-  canvas.on('object:moving', function(e) {
-      var target = e.target;
+  // canvas.on('object:moving', function(e) {
+  //     var target = e.target;
 
-      if (target.type === 'circle') {
-          for (var i = 0; i < target.connected_members.length; i++) {
-              target.connected_members[i].set({
-                  'x1': target.left,
-                  'y1': target.top
-              });
-          }
-      }
+  //     if (target.type === 'circle') {
+  //         for (var i = 0; i < target.connected_members.length; i++) {
+  //             target.connected_members[i].set({
+  //                 'x1': target.left,
+  //                 'y1': target.top
+  //             });
+  //         }
+  //     }
       // if(p.line1){
       // 	p.line1.set({ 'x2': p.left, 'y2': p.top });
       // }
@@ -162,9 +102,9 @@
       // }
       // if(p.line4){
       // 	p.line4.set({ 'x1': p.left, 'y1': p.top });
-      // }
-      canvas.renderAll();
-  });
+  //     // }
+  //     canvas.renderAll();
+  // });
 
   function startSimulation() {
       return false;
