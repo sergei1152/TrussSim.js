@@ -8,7 +8,9 @@ function Member(left,top,canv){
        hasBorders: false
     });
     this.line.force=null; //positive inficates tensile, negative indicates compressive
-
+    this.line.start_node=null;
+    this.line.end_node=null;
+    
 	this.placed_start=false; //whether the member's start position has been placed on a node
 	this.placed_end=false; //whether a member's end position has been placed on a node
 	

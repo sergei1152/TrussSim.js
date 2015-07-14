@@ -11,7 +11,7 @@ function Node(left, top,canv){
 
     this.circle.hasControls = this.circle.hasBorders = false;
     this.circle.connected_members=[];
-
+    
     if(canv){
         Node.canvas = canv;
         Node.canvas.add(this.circle);

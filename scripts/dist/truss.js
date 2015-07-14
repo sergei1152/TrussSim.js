@@ -95,13 +95,18 @@ module.exports = function(canvas, ModeController) {
                         x2: event.target.left,
                         y2: event.target.top
                     });
+                    ModeController.new_member.line.start_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member.line);
                     ModeController.new_member.placedStart = true;
                 } else { //if the new member already has a starting node
                     ModeController.new_member.line.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
+                    ModeController.new_member.line.end_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member.line);
                     ModeController.new_member.placedEnd = true;
+
                     canvas.remove(ModeController.new_member.line); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member.line);
                     canvas.sendToBack(ModeController.new_member.line);
@@ -137,6 +142,21 @@ module.exports = function(canvas, ModeController) {
             canvas.renderAll();
         }
     });
+
+    canvas.on('object:moving', function(event) {
+        console.log(event.target);
+        if(event.target.type=='circle'){ //if a node is moving
+            var node=event.target;
+            for (var i=0;i<node.connected_members.length;i++){
+                if(node.connected_members[i].start_node==node){ //if the start of the member is connected to the node
+                    node.connected_members[i].set({x1:node.left,y1: node.top});
+                }
+                else if(node.connected_members[i].end_node==node){ //if the end of the member is connected to the node
+                    node.connected_members[i].set({x2:node.left,y2: node.top});
+                }
+            }
+        }
+    });
 };
 },{"./Member":3,"./Node":5}],3:[function(require,module,exports){
 function Member(left,top,canv){
@@ -149,7 +169,9 @@ function Member(left,top,canv){
        hasBorders: false
     });
     this.line.force=null; //positive inficates tensile, negative indicates compressive
-
+    this.line.start_node=null;
+    this.line.end_node=null;
+    
 	this.placed_start=false; //whether the member's start position has been placed on a node
 	this.placed_end=false; //whether a member's end position has been placed on a node
 	
@@ -234,7 +256,7 @@ function Node(left, top,canv){
 
     this.circle.hasControls = this.circle.hasBorders = false;
     this.circle.connected_members=[];
-
+    
     if(canv){
         Node.canvas = canv;
         Node.canvas.add(this.circle);
@@ -295,91 +317,6 @@ module.exports=ResizeController;
 
 
   InteractionController(canvas, ModeController);
-
-
-  
-  // var node = new Node(50, 50, canvas);
-  // node.addMember(5, 6, 8, 11);
-
-
-  // //The redraw button
-  // $('#redraw').on('click', function() {
-  //     canvas.renderAll();
-  //     canvas.calcOffset();
-  //     console.log('redraw');
-  // });
-   // function makeCircle(left, top, line1, line2, line3, line4) {
-   //   var c = new fabric.Circle({
-   //     left: left,
-   //     top: top,
-   //     strokeWidth: 5,
-   //     radius: 12,
-   //     fill: '#fff',
-   //     stroke: '#666',
-   //     selectable: true
-   //   });
-   //   c.hasControls = c.hasBorders = false;
-
-   //   c.line1 = line1;
-   //   c.line2 = line2;
-   //   c.line3 = line3;
-   //   c.line4 = line4;
-
-   //   return c;
-   // }
-
-   // function makeLine(coords) {
-   //   return new fabric.Line(coords, {
-   //     fill: 'red',
-   //     stroke: 'blue',
-   //     strokeWidth: 5,
-   //     selectable: false
-   //   });
-   // }
-
-   // var line = makeLine([ 250, 125, 250, 175 ]),
-   //     line2 = makeLine([ 250, 175, 250, 250 ]),
-   //     line3 = makeLine([ 250, 250, 300, 350]),
-   //     line4 = makeLine([ 250, 250, 200, 350]),
-   //     line5 = makeLine([ 250, 175, 175, 225 ]),
-   //     line6 = makeLine([ 250, 175, 325, 225 ]);
-
-   // canvas.add(line, line2, line3, line4, line5, line6);
-   // canvas.add(Node(5,5));
-   // canvas.add(
-   //   makeCircle(line.get('x1'), line.get('y1'), null, line),
-   //   makeCircle(line.get('x2'), line.get('y2'), line, line2, line5, line6),
-   //   makeCircle(line2.get('x2'), line2.get('y2'), line2, line3, line4),
-   //   makeCircle(line3.get('x2'), line3.get('y2'), line3),
-   //   makeCircle(line4.get('x2'), line4.get('y2'), line4),
-   //   makeCircle(line5.get('x2'), line5.get('y2'), line5),
-   //   makeCircle(line6.get('x2'), line6.get('y2'), line6)
-   // );
-  // canvas.on('object:moving', function(e) {
-  //     var target = e.target;
-
-  //     if (target.type === 'circle') {
-  //         for (var i = 0; i < target.connected_members.length; i++) {
-  //             target.connected_members[i].set({
-  //                 'x1': target.left,
-  //                 'y1': target.top
-  //             });
-  //         }
-  //     }
-      // if(p.line1){
-      // 	p.line1.set({ 'x2': p.left, 'y2': p.top });
-      // }
-      // if(p.line2){
-      // 	p.line2.set({ 'x1': p.left, 'y1': p.top });
-      // }
-      // if(p.line3){
-      // 	p.line3.set({ 'x1': p.left, 'y1': p.top });
-      // }
-      // if(p.line4){
-      // 	p.line4.set({ 'x1': p.left, 'y1': p.top });
-  //     // }
-  //     canvas.renderAll();
-  // });
 
   function startSimulation() {
       return false;

@@ -41,13 +41,18 @@ module.exports = function(canvas, ModeController) {
                         x2: event.target.left,
                         y2: event.target.top
                     });
+                    ModeController.new_member.line.start_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member.line);
                     ModeController.new_member.placedStart = true;
                 } else { //if the new member already has a starting node
                     ModeController.new_member.line.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
+                    ModeController.new_member.line.end_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member.line);
                     ModeController.new_member.placedEnd = true;
+
                     canvas.remove(ModeController.new_member.line); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member.line);
                     canvas.sendToBack(ModeController.new_member.line);
@@ -81,6 +86,21 @@ module.exports = function(canvas, ModeController) {
         if (ModeController.mode === 'erase') {
             e.target.setFill(previous_fill);
             canvas.renderAll();
+        }
+    });
+
+    canvas.on('object:moving', function(event) {
+        console.log(event.target);
+        if(event.target.type=='circle'){ //if a node is moving
+            var node=event.target;
+            for (var i=0;i<node.connected_members.length;i++){
+                if(node.connected_members[i].start_node==node){ //if the start of the member is connected to the node
+                    node.connected_members[i].set({x1:node.left,y1: node.top});
+                }
+                else if(node.connected_members[i].end_node==node){ //if the end of the member is connected to the node
+                    node.connected_members[i].set({x2:node.left,y2: node.top});
+                }
+            }
         }
     });
 };
