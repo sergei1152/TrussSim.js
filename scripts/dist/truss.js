@@ -52,12 +52,34 @@ $('#grid-size-input').change(function() {
 
 module.exports = Grid;
 },{}],2:[function(require,module,exports){
+function Member(left,top,canvas){
+	this.line=new fabric.Line([left,top,left,top], {
+       fill: 'red',
+       stroke: 'blue',
+       strokeWidth: 5,
+       selectable: false
+    });
+    this.line.force=0;
+
+	this.placed_start=false; //whether the member's start position has been placed on a node
+	this.placed_end=false; //whether a member's end position has been placed on a node
+	
+	canvas.add(this.line);
+	canvas.sendBackwards(this.line);
+	return this;
+}
+
+module.exports=Member;
+},{}],3:[function(require,module,exports){
 var Node=require('./Node');
+var Member=require('./Member');
+
 //Controlls the current mode
 var ModeController={
 	canvas: null,
 	mode: 'move',
 	new_node:null,
+	new_member: null,
 
 	clearNode:function(){
 		if(ModeController.new_node){
@@ -78,20 +100,23 @@ $('#move-button').on('click',function(){
 });
 
 $('#add-member-button').on('click',function(){
-	ModeController.mode='add_member';
-	ModeController.clearNode();
+	if(ModeController.mode!=='add_member'){ //if not already in add-member mode
+		ModeController.mode='add_member';
+		ModeController.clearNode(); 
+		ModeController.new_member=new Member(-100,-100, ModeController.canvas);
+	}
 });
 
 $('#add-node-button').on('click',function(){
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
-		ModeController.new_node=new Node(100,100, ModeController.canvas);
+		ModeController.new_node=new Node(-100,-100, ModeController.canvas);
 		ModeController.mode='add_node';
 	}
 });
 
 module.exports=ModeController;
 
-},{"./Node":3}],3:[function(require,module,exports){
+},{"./Member":2,"./Node":4}],4:[function(require,module,exports){
 function Node(left, top,canv){
 	this.circle = new fabric.Circle({
       left: left,
@@ -110,6 +135,7 @@ function Node(left, top,canv){
     if(canv){
         Node.canvas = canv;
         Node.canvas.add(this.circle);
+        Node.canvas.bringToFront(this.circle);
     }
     
     return this;
@@ -126,7 +152,7 @@ Node.prototype.addMember=function(x1,y1,x2,y2){
 	Node.canvas.add(line);
 };
 module.exports=Node;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -153,9 +179,10 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var Node = require('./Node');
+  var Member=require('./Member');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
 
@@ -179,6 +206,13 @@ module.exports=ResizeController;
           });
           canvas.renderAll();
       }
+      if (ModeController.mode === 'add_member' && (ModeController.new_member.placedStart && !ModeController.new_member.placedEnd)) {
+          ModeController.new_member.line.set({
+              'x2': event.e.x,
+              'y2': event.e.y - 105
+          });
+          canvas.renderAll();
+      }
   });
 
   canvas.on('mouse:up', function(event) {
@@ -186,11 +220,10 @@ module.exports=ResizeController;
           //for some reason have to remove and re-add node to avoid weird glitcheness
           canvas.remove(ModeController.new_node.circle);
           canvas.add(ModeController.new_node.circle);
+          canvas.bringToFront(ModeController.new_node.circle);
           ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas);
       }
-      else if (ModeController.mode === 'erase') {
-          canvas.remove(event.target);
-      }
+     
   });
 
   //For the eraser tool
@@ -198,6 +231,21 @@ module.exports=ResizeController;
       if (ModeController.mode === 'erase') {
           canvas.remove(event.target);
       }
+     else if (ModeController.mode === 'add_member') {
+        if(event.target.type==='circle'){
+          if(!ModeController.new_member.placedStart){
+            ModeController.new_member.line.set({x1: event.target.left,y1: event.target.top}); //position the start of the member to be at the center of the node
+            ModeController.new_member.placedStart=true;
+          }
+          else{
+            ModeController.new_member.line.set({x2: event.target.left,y2: event.target.top}); //position the start of the member to be at the center of the node
+            ModeController.new_member.placedEnd=true;
+            canvas.remove(ModeController.new_member.line);
+            canvas.add(ModeController.new_member.line);
+            ModeController.new_member=new Member(-100,-100,canvas);
+          }
+        }
+    }
   });
 
   var previous_fill='grey';
@@ -303,4 +351,4 @@ module.exports=ResizeController;
   function startSimulation() {
       return false;
   }
-},{"./Grid":1,"./ModeController":2,"./Node":3,"./ResizeController":4}]},{},[5]);
+},{"./Grid":1,"./Member":2,"./ModeController":3,"./Node":4,"./ResizeController":5}]},{},[6]);

@@ -16,6 +16,7 @@ function Node(left, top,canv){
     if(canv){
         Node.canvas = canv;
         Node.canvas.add(this.circle);
+        Node.canvas.bringToFront(this.circle);
     }
     
     return this;

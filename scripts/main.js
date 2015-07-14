@@ -1,5 +1,6 @@
   var ModeController = require('./ModeController');
   var Node = require('./Node');
+  var Member=require('./Member');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
 
@@ -23,6 +24,13 @@
           });
           canvas.renderAll();
       }
+      if (ModeController.mode === 'add_member' && (ModeController.new_member.placedStart && !ModeController.new_member.placedEnd)) {
+          ModeController.new_member.line.set({
+              'x2': event.e.x,
+              'y2': event.e.y - 105
+          });
+          canvas.renderAll();
+      }
   });
 
   canvas.on('mouse:up', function(event) {
@@ -30,11 +38,10 @@
           //for some reason have to remove and re-add node to avoid weird glitcheness
           canvas.remove(ModeController.new_node.circle);
           canvas.add(ModeController.new_node.circle);
+          canvas.bringToFront(ModeController.new_node.circle);
           ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas);
       }
-      else if (ModeController.mode === 'erase') {
-          canvas.remove(event.target);
-      }
+     
   });
 
   //For the eraser tool
@@ -42,6 +49,21 @@
       if (ModeController.mode === 'erase') {
           canvas.remove(event.target);
       }
+     else if (ModeController.mode === 'add_member') {
+        if(event.target.type==='circle'){
+          if(!ModeController.new_member.placedStart){
+            ModeController.new_member.line.set({x1: event.target.left,y1: event.target.top}); //position the start of the member to be at the center of the node
+            ModeController.new_member.placedStart=true;
+          }
+          else{
+            ModeController.new_member.line.set({x2: event.target.left,y2: event.target.top}); //position the start of the member to be at the center of the node
+            ModeController.new_member.placedEnd=true;
+            canvas.remove(ModeController.new_member.line);
+            canvas.add(ModeController.new_member.line);
+            ModeController.new_member=new Member(-100,-100,canvas);
+          }
+        }
+    }
   });
 
   var previous_fill='grey';
