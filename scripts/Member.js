@@ -3,7 +3,9 @@ function Member(left,top,canv){
        fill: 'red',
        stroke: 'blue',
        strokeWidth: 5,
-       selectable: false
+       selectable: true,
+       hasControls: false,
+       hasBorders: false
     });
     this.line.force=null; //positive inficates tensile, negative indicates compressive
 
