@@ -36,6 +36,8 @@ $('#move-button').on('click',function(){
 
 $('#add-member-button').on('click',function(){
 	ModeController.clearNode(); 
+	ModeController.canvas.defaultCursor='auto';
+	ModeController.canvas.hoverCursor='copy';
 	if(ModeController.mode!=='add_member'){ //if not already in add-member mode
 		ModeController.mode='add_member';
 		ModeController.new_member=new Member(-100,-100, ModeController.canvas);
@@ -44,6 +46,7 @@ $('#add-member-button').on('click',function(){
 
 $('#add-node-button').on('click',function(){
 	ModeController.clearMember();
+	ModeController.canvas.defaultCursor='copy';
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
 		ModeController.new_node=new Node(-100,-100, ModeController.canvas);
 		ModeController.mode='add_node';
