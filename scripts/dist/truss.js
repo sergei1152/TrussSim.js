@@ -86,14 +86,6 @@ module.exports = function(canvas, ModeController) {
             ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas); //create a new node, while leaving the old one in the canvas
         }
 
-    });
-
-    //Handles erasing nodes and members, as well as placing members
-    canvas.on('object:selected', function(event) {
-        if (ModeController.mode === 'erase') {
-            canvas.remove(event.target); //remove the selected node from the canvas
-        } 
-
         else if (ModeController.mode === 'add_member') {
             if (event.target.type === 'circle') {
                 if (!ModeController.new_member.placedStart) { //if the member's start has not been determined yet
@@ -117,6 +109,16 @@ module.exports = function(canvas, ModeController) {
                 }
             }
         }
+
+    });
+
+    //Handles erasing nodes and members, as well as placing members
+    canvas.on('object:selected', function(event) {
+        if (ModeController.mode === 'erase') {
+            canvas.remove(event.target); //remove the selected node from the canvas
+        } 
+
+        
     });
 
     var previous_fill = 'grey';
