@@ -17,7 +17,7 @@ function Node(left, top,canv){
         Node.canvas = canv;
         Node.canvas.add(this.circle);
     }
-
+    
     return this;
 }
 Node.prototype.addMember=function(x1,y1,x2,y2){

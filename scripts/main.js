@@ -17,16 +17,42 @@
 
   canvas.on('mouse:move', function(event) {
       if (ModeController.mode === 'add_node') {
-      	ModeController.new_node.circle.set({'left':event.e.x,'top':event.e.y-105});
-      	canvas.renderAll();
+          ModeController.new_node.circle.set({
+              'left': event.e.x,
+              'top': event.e.y - 105
+          });
+          canvas.renderAll();
       }
   });
 
   canvas.on('mouse:up', function(event) {
-  	console.log('mouse up');
       if (ModeController.mode === 'add_node') {
-      	ModeController.new_node=new Node(event.e.x,event.e.y-105, canvas);
-      	canvas.add(ModeController.new_node.circle);
+          //for some reason have to remove and re-add node to avoid weird glitcheness
+          canvas.remove(ModeController.new_node.circle);
+          canvas.add(ModeController.new_node.circle);
+          ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas);
+      }
+  });
+
+  $('#redraw').on('click', function() {
+      canvas.renderAll();
+      canvas.calcOffset();
+      console.log('redraw');
+  });
+  var previous_fill;
+  var hover_fill = 'red';
+  canvas.on('mouse:over', function(e) {
+      if (ModeController.mode === 'erase') {
+          previous_fill = e.target.getFill();
+          e.target.setFill(hover_fill);
+          canvas.renderAll();
+      }
+  });
+
+  canvas.on('mouse:out', function(e) {
+      if (ModeController.mode === 'erase') {
+          e.target.setFill(previous_fill);
+          canvas.renderAll();
       }
   });
   var node = new Node(50, 50, canvas);
