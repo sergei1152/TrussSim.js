@@ -32,14 +32,19 @@
           canvas.add(ModeController.new_node.circle);
           ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas);
       }
+      else if (ModeController.mode === 'erase') {
+          canvas.remove(event.target);
+      }
   });
 
-  $('#redraw').on('click', function() {
-      canvas.renderAll();
-      canvas.calcOffset();
-      console.log('redraw');
+  //For the eraser tool
+  canvas.on('object:selected', function(event) {
+      if (ModeController.mode === 'erase') {
+          canvas.remove(event.target);
+      }
   });
-  var previous_fill;
+
+  var previous_fill='grey';
   var hover_fill = 'red';
   canvas.on('mouse:over', function(e) {
       if (ModeController.mode === 'erase') {
@@ -55,6 +60,14 @@
           canvas.renderAll();
       }
   });
+
+  $('#redraw').on('click', function() {
+      canvas.renderAll();
+      canvas.calcOffset();
+      console.log('redraw');
+  });
+
+  
   var node = new Node(50, 50, canvas);
   node.addMember(5, 6, 8, 11);
 
