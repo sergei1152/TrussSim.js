@@ -144,46 +144,56 @@ module.exports = function(canvas, ModeController) {
     });
 
     canvas.on('object:moving', function(event) {
-        console.log(event.target);
         if(event.target.type=='circle'){ //if a node is moving
             var node=event.target;
-            for (var i=0;i<node.connected_members.length;i++){
-                if(node.connected_members[i].start_node==node){ //if the start of the member is connected to the node
-                    node.connected_members[i].set({x1:node.left,y1: node.top});
-                }
-                else if(node.connected_members[i].end_node==node){ //if the end of the member is connected to the node
-                    node.connected_members[i].set({x2:node.left,y2: node.top});
-                }
-            }
+            node.moveMembers();
+        }
+
+        if(event.target.type=='line'){ //if a member is being moves
+            var member=event.target;
+            member.moveNodes();
+            canvas.renderAll();
         }
     });
 };
 },{"./Member":3,"./Node":5}],3:[function(require,module,exports){
-function Member(left,top,canv){
-	this.line=new fabric.Line([left,top,left,top], {
-       fill: 'red',
-       stroke: 'blue',
-       strokeWidth: 5,
-       selectable: true,
-       hasControls: false,
-       hasBorders: false
+function Member(left, top, canv) {
+    this.line = new fabric.Line([left, top, left, top], {
+        fill: 'red',
+        stroke: 'blue',
+        strokeWidth: 5,
+        selectable: true,
+        hasControls: false,
+        hasBorders: false
     });
-    this.line.force=null; //positive inficates tensile, negative indicates compressive
-    this.line.start_node=null;
-    this.line.end_node=null;
-    
-	this.placed_start=false; //whether the member's start position has been placed on a node
-	this.placed_end=false; //whether a member's end position has been placed on a node
-	
-	if(canv){
-		Member.canvas=canv;
-		Member.canvas.add(this.line);
-		Member.canvas.sendToBack(this.line);
-	}
-	return this;
+    this.line.force = null; //positive inficates tensile, negative indicates compressive
+    this.line.start_node = null;
+    this.line.end_node = null;
+
+    this.placed_start = false; //whether the member's start position has been placed on a node
+    this.placed_end = false; //whether a member's end position has been placed on a node
+
+    if (canv) {
+        Member.canvas = canv;
+        Member.canvas.add(this.line);
+        Member.canvas.sendToBack(this.line);
+    }
+    return this;
 }
 
-module.exports=Member;
+fabric.Line.prototype.moveNodes=function() {
+	if(this.start_node && this.end_node){
+		console.log(this.x1);
+		this.start_node.set({left: this.x1, top: this.y1});
+		this.end_node.set({left: this.x2, top: this.y2});
+
+		
+		this.start_node.moveMembers();
+		this.end_node.moveMembers();
+	}
+};
+
+module.exports = Member;
 },{}],4:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
@@ -243,30 +253,45 @@ $('#add-node-button').on('click',function(){
 module.exports=ModeController;
 
 },{"./Member":3,"./Node":5}],5:[function(require,module,exports){
-function Node(left, top,canv){
-	this.circle = new fabric.Circle({
-      left: left,
-      top: top,
-      strokeWidth: 5,
-      radius: 12,
-      fill: '#fff',
-      stroke: '#666',
-      selectable: true
+function Node(left, top, canv) {
+    this.circle = new fabric.Circle({
+        left: left,
+        top: top,
+        strokeWidth: 5,
+        radius: 12,
+        fill: '#fff',
+        stroke: '#666',
+        selectable: true
     });
 
     this.circle.hasControls = this.circle.hasBorders = false;
-    this.circle.connected_members=[];
-    
-    if(canv){
+    this.circle.connected_members = [];
+
+    if (canv) {
         Node.canvas = canv;
         Node.canvas.add(this.circle);
         Node.canvas.bringToFront(this.circle);
     }
-    
     return this;
 }
 
-module.exports=Node;
+fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to make this a prototype
+    for (var i = 0; i < this.connected_members.length; i++) {
+        if (this.connected_members[i].start_node == this) { //if the start of the member is connected to the this
+            this.connected_members[i].set({
+                x1: this.left,
+                y1: this.top
+            });
+        } else if (this.connected_members[i].end_node == this) { //if the end of the member is connected to the this
+            this.connected_members[i].set({
+                x2: this.left,
+                y2: this.top
+            });
+        }
+    }
+};
+
+module.exports = Node;
 },{}],6:[function(require,module,exports){
 var ResizeController={
 	canvas: null,

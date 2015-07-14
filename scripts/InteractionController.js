@@ -90,17 +90,15 @@ module.exports = function(canvas, ModeController) {
     });
 
     canvas.on('object:moving', function(event) {
-        console.log(event.target);
         if(event.target.type=='circle'){ //if a node is moving
             var node=event.target;
-            for (var i=0;i<node.connected_members.length;i++){
-                if(node.connected_members[i].start_node==node){ //if the start of the member is connected to the node
-                    node.connected_members[i].set({x1:node.left,y1: node.top});
-                }
-                else if(node.connected_members[i].end_node==node){ //if the end of the member is connected to the node
-                    node.connected_members[i].set({x2:node.left,y2: node.top});
-                }
-            }
+            node.moveMembers();
+        }
+
+        if(event.target.type=='line'){ //if a member is being moves
+            var member=event.target;
+            member.moveNodes();
+            canvas.renderAll();
         }
     });
 };
