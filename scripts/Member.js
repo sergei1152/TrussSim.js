@@ -24,13 +24,13 @@ function Member(left, top, canv) {
 
 fabric.Line.prototype.moveNodes=function() {
 	if(this.start_node && this.end_node){
-		console.log(this.x1);
-		this.start_node.set({left: this.x1, top: this.y1});
-		this.end_node.set({left: this.x2, top: this.y2});
+		console.log(this.get('x1'));
+		// this.start_node.set({left: this.x1, top: this.y1});
+		// this.end_node.set({left: this.x2, top: this.y2});
 
-		
-		this.start_node.moveMembers();
-		this.end_node.moveMembers();
+
+		// this.start_node.moveMembers();
+		// this.end_node.moveMembers();
 	}
 };
 

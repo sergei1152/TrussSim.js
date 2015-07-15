@@ -17,6 +17,7 @@ function Node(left, top, canv) {
         Node.canvas.add(this.circle);
         Node.canvas.bringToFront(this.circle);
     }
+    
     return this;
 }
 
@@ -33,6 +34,8 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
                 y2: this.top
             });
         }
+        Node.canvas.remove(this.connected_members[i]);
+        Node.canvas.add(this.connected_members[i]);
     }
 };
 

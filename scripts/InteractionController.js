@@ -1,5 +1,6 @@
 var Node=require('./Node');
 var Member=require('./Member');
+var Car=require('./Car');
 
 module.exports = function(canvas, ModeController) {
 
@@ -97,8 +98,23 @@ module.exports = function(canvas, ModeController) {
 
         if(event.target.type=='line'){ //if a member is being moves
             var member=event.target;
-            member.moveNodes();
-            canvas.renderAll();
+            member.moveNodes();        
         }
+    });
+
+    $('#simulation-button').on('click', function(){
+      var car = new Car({
+          width: 100,
+          height: 50,
+          left: 100,
+          top: 100,
+          label: 'test',
+          fill: '#faa',
+          length: 10,
+          weight: 7.5
+      });
+      canvas.add(car);
+      console.log(car);
+      return false;
     });
 };

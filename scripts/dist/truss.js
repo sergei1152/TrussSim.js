@@ -1,4 +1,46 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var Car = fabric.util.createClass(fabric.Rect, {
+
+    type: 'car',
+    weight: null,
+    length: null,
+
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
+
+        this.callSuper('initialize', options);
+        this.set('label', options.label || '');
+        this.set('weight', options.weight || 7.5); //set the weight and length of the car
+        this.set('length', options.length || 6);
+        
+        //Restricting movement of the car by player to only the x-axis
+        this.set({
+            lockMovementY: true,
+            lockRotation: true,
+            lockScalingX: true,
+            lockScalingY: true
+        }); 
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            label: this.get('label')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
+
+        ctx.font = '20px Helvetica';
+        ctx.fillStyle = '#333';
+        ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 20);
+    }
+});
+
+module.exports = Car;
+},{}],2:[function(require,module,exports){
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -51,9 +93,10 @@ $('#grid-size-input').change(function() {
 });
 
 module.exports = Grid;
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
+var Car=require('./Car');
 
 module.exports = function(canvas, ModeController) {
 
@@ -151,12 +194,27 @@ module.exports = function(canvas, ModeController) {
 
         if(event.target.type=='line'){ //if a member is being moves
             var member=event.target;
-            member.moveNodes();
-            canvas.renderAll();
+            member.moveNodes();        
         }
     });
+
+    $('#simulation-button').on('click', function(){
+      var car = new Car({
+          width: 100,
+          height: 50,
+          left: 100,
+          top: 100,
+          label: 'test',
+          fill: '#faa',
+          length: 10,
+          weight: 7.5
+      });
+      canvas.add(car);
+      console.log(car);
+      return false;
+    });
 };
-},{"./Member":3,"./Node":5}],3:[function(require,module,exports){
+},{"./Car":1,"./Member":4,"./Node":6}],4:[function(require,module,exports){
 function Member(left, top, canv) {
     this.line = new fabric.Line([left, top, left, top], {
         fill: 'red',
@@ -183,18 +241,18 @@ function Member(left, top, canv) {
 
 fabric.Line.prototype.moveNodes=function() {
 	if(this.start_node && this.end_node){
-		console.log(this.x1);
-		this.start_node.set({left: this.x1, top: this.y1});
-		this.end_node.set({left: this.x2, top: this.y2});
+		console.log(this.get('x1'));
+		// this.start_node.set({left: this.x1, top: this.y1});
+		// this.end_node.set({left: this.x2, top: this.y2});
 
-		
-		this.start_node.moveMembers();
-		this.end_node.moveMembers();
+
+		// this.start_node.moveMembers();
+		// this.end_node.moveMembers();
 	}
 };
 
 module.exports = Member;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
 
@@ -252,7 +310,7 @@ $('#add-node-button').on('click',function(){
 
 module.exports=ModeController;
 
-},{"./Member":3,"./Node":5}],5:[function(require,module,exports){
+},{"./Member":4,"./Node":6}],6:[function(require,module,exports){
 function Node(left, top, canv) {
     this.circle = new fabric.Circle({
         left: left,
@@ -272,6 +330,7 @@ function Node(left, top, canv) {
         Node.canvas.add(this.circle);
         Node.canvas.bringToFront(this.circle);
     }
+    
     return this;
 }
 
@@ -288,11 +347,13 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
                 y2: this.top
             });
         }
+        Node.canvas.remove(this.connected_members[i]);
+        Node.canvas.add(this.connected_members[i]);
     }
 };
 
 module.exports = Node;
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -319,19 +380,17 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
   var ModeController = require('./ModeController');
-  var InteractionController=require('./InteractionController');
-  var Node = require('./Node');
-  var Member=require('./Member');
+  var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
 
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
-  
-  //So that all fabric objects have an origin along the center
+
+   //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
   ModeController.canvas = canvas;
@@ -343,7 +402,5 @@ module.exports=ResizeController;
 
   InteractionController(canvas, ModeController);
 
-  function startSimulation() {
-      return false;
-  }
-},{"./Grid":1,"./InteractionController":2,"./Member":3,"./ModeController":4,"./Node":5,"./ResizeController":6}]},{},[7]);
+
+},{"./Grid":2,"./InteractionController":3,"./ModeController":5,"./ResizeController":7}]},{},[8]);

@@ -1,15 +1,13 @@
   var ModeController = require('./ModeController');
-  var InteractionController=require('./InteractionController');
-  var Node = require('./Node');
-  var Member=require('./Member');
+  var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
 
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
-  
-  //So that all fabric objects have an origin along the center
+
+   //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
   ModeController.canvas = canvas;
@@ -21,6 +19,3 @@
 
   InteractionController(canvas, ModeController);
 
-  function startSimulation() {
-      return false;
-  }
