@@ -34,8 +34,10 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
                 y2: this.top
             });
         }
+        //Re-adding the members to avoing weird glitchiness
         Node.canvas.remove(this.connected_members[i]);
         Node.canvas.add(this.connected_members[i]);
+        Node.canvas.sendToBack(this.connected_members[i]);
     }
 };
 

@@ -164,7 +164,7 @@ module.exports = function(canvas, ModeController) {
 
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
-        if (ModeController.mode === 'erase') {
+        if (ModeController.mode === 'erase') { //TODO: remove all connected members from the nodes as well
             canvas.remove(event.target); //remove the selected node from the canvas
         } 
 
@@ -195,8 +195,8 @@ module.exports = function(canvas, ModeController) {
         }
 
         if(event.target.type=='line'){ //if a member is being moves
-            var member=event.target;
-            member.moveNodes();        
+            // var member=event.target;
+            // member.moveNodes();        
         }
     });
 
@@ -220,7 +220,7 @@ function Member(left, top, canv) {
         fill: 'red',
         stroke: 'blue',
         strokeWidth: 5,
-        selectable: true,
+        selectable: false,
         hasControls: false,
         hasBorders: false
     });
@@ -347,8 +347,10 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
                 y2: this.top
             });
         }
+        //Re-adding the members to avoing weird glitchiness
         Node.canvas.remove(this.connected_members[i]);
         Node.canvas.add(this.connected_members[i]);
+        Node.canvas.sendToBack(this.connected_members[i]);
     }
 };
 

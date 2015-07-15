@@ -66,7 +66,7 @@ module.exports = function(canvas, ModeController) {
 
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
-        if (ModeController.mode === 'erase') {
+        if (ModeController.mode === 'erase') { //TODO: remove all connected members from the nodes as well
             canvas.remove(event.target); //remove the selected node from the canvas
         } 
 
@@ -97,8 +97,8 @@ module.exports = function(canvas, ModeController) {
         }
 
         if(event.target.type=='line'){ //if a member is being moves
-            var member=event.target;
-            member.moveNodes();        
+            // var member=event.target;
+            // member.moveNodes();        
         }
     });
 

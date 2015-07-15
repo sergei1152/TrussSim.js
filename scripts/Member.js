@@ -3,7 +3,7 @@ function Member(left, top, canv) {
         fill: 'red',
         stroke: 'blue',
         strokeWidth: 5,
-        selectable: true,
+        selectable: false,
         hasControls: false,
         hasBorders: false
     });
