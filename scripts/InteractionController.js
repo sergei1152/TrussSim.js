@@ -108,13 +108,11 @@ module.exports = function(canvas, ModeController) {
           height: 50,
           left: 100,
           top: 100,
-          label: 'test',
-          fill: '#faa',
+          label: 'Truck',
           length: 10,
           weight: 7.5
       });
       canvas.add(car);
-      console.log(car);
       return false;
     });
 };

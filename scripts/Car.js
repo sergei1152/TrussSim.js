@@ -19,7 +19,9 @@ var Car = fabric.util.createClass(fabric.Rect, {
             lockMovementY: true,
             lockRotation: true,
             lockScalingX: true,
-            lockScalingY: true
+            lockScalingY: true,
+            hasControls: false,
+            fill: "#4500F5"
         }); 
     },
 
@@ -32,9 +34,9 @@ var Car = fabric.util.createClass(fabric.Rect, {
     _render: function(ctx) {
         this.callSuper('_render', ctx);
 
-        ctx.font = '20px Helvetica';
-        ctx.fillStyle = '#333';
-        ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 20);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#FFFFFF'; //color of the font
+        ctx.fillText(this.label, -this.width / 4, -this.height / 2+30);
     }
 });
 
