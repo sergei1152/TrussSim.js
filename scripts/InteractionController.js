@@ -6,6 +6,7 @@ module.exports = function(canvas, ModeController) {
 
     //Handles movement of new nodes and new members
     canvas.on('mouse:move', function(event) {
+        //if in 'add-node' mode
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
@@ -13,9 +14,9 @@ module.exports = function(canvas, ModeController) {
             });
             canvas.renderAll();
         }
-        //if in add member mode and the start of the new member has already been determined
-        else if (ModeController.mode === 'add_member' && (ModeController.new_member.placedStart && !ModeController.new_member.placedEnd)) {
-            ModeController.new_member.line.set({ //set the end of the member to follow the cursor
+        //if in 'add-member' mode and the start of the member has been placed already
+        else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
+            ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
                 'y2': event.e.y - 105
             });
@@ -26,8 +27,7 @@ module.exports = function(canvas, ModeController) {
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
         if (ModeController.mode === 'add_node') {
-            //for some reason have to remove and re-add node to avoid weird glitcheness
-            canvas.remove(ModeController.new_node);
+            canvas.remove(ModeController.new_node);//for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
             canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
@@ -35,30 +35,31 @@ module.exports = function(canvas, ModeController) {
         }
 
         else if (ModeController.mode === 'add_member') {
-            if (event.target.type === 'circle') {
-                if (!ModeController.new_member.placedStart) { //if the member's start has not been determined yet
-                    ModeController.new_member.line.set({ //position the start of the member to be at the center of the node
+            if (event.target && event.target.type === 'node') { //if a node has been clicked on
+                if (!ModeController.new_member.start_node) { //if the member's start has not been determined yet
+                    ModeController.new_member.set({ //position the start of the member to be at the center of the node
                         x1: event.target.left,
                         y1: event.target.top,
                         x2: event.target.left,
                         y2: event.target.top
                     });
-                    ModeController.new_member.line.start_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member.line);
-                    ModeController.new_member.placedStart = true;
-                } else { //if the new member already has a starting node
-                    ModeController.new_member.line.set({ //place the end of the node at the center of the selected node
+
+                    ModeController.new_member.start_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member);
+                    canvas.renderAll();
+                } else if(ModeController.new_member.start_node && !ModeController.new_member.end_node){ //if the new member already has a starting node and the end has not been determined yet
+                    ModeController.new_member.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
-                    ModeController.new_member.line.end_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member.line);
-                    ModeController.new_member.placedEnd = true;
+                    ModeController.new_member.end_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member); //TODO REMOVE ABILITY FOR START NODE TO BE SAME AS END NODE
 
-                    canvas.remove(ModeController.new_member.line); //re-add the member to avoid weird glitchiness
-                    canvas.add(ModeController.new_member.line);
-                    canvas.sendToBack(ModeController.new_member.line);
-                    ModeController.new_member = new Member(-100, -100, canvas); //create a new member while leaving the old one in the canvas
+                    canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
+                    canvas.add(ModeController.new_member);
+                    canvas.sendToBack(ModeController.new_member);
+                    ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    canvas.add(ModeController.new_member);
                 }
             }
         }
@@ -92,14 +93,9 @@ module.exports = function(canvas, ModeController) {
     });
 
     canvas.on('object:moving', function(event) {
-        if(event.target.type=='circle'){ //if a node is moving
+        if(event.target.type=='node'){ //if a node is moving
             var node=event.target;
-            node.moveMembers();
-        }
-
-        if(event.target.type=='line'){ //if a member is being moves
-            // var member=event.target;
-            // member.moveNodes();        
+            node.moveMembers(canvas);
         }
     });
 

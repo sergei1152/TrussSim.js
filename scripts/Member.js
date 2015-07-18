@@ -1,37 +1,43 @@
-function Member(left, top, canv) {
-    this.line = new fabric.Line([left, top, left, top], {
-        fill: 'red',
-        stroke: 'blue',
-        strokeWidth: 5,
-        selectable: false,
-        hasControls: false,
-        hasBorders: false
-    });
-    this.line.force = null; //positive inficates tensile, negative indicates compressive
-    this.line.start_node = null;
-    this.line.end_node = null;
+var Member = fabric.util.createClass(fabric.Line, {
+    type: 'member',
 
-    this.placed_start = false; //whether the member's start position has been placed on a node
-    this.placed_end = false; //whether a member's end position has been placed on a node
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
 
-    if (canv) {
-        Member.canvas = canv;
-        Member.canvas.add(this.line);
-        Member.canvas.sendToBack(this.line);
+        this.callSuper('initialize', options);
+
+        //settings default values of the most important properties
+        this.set({
+            fill: 'red',
+            stroke: 'red',
+            strokeWidth: 5,
+            strokeLineJoin : "round",
+            selectable: false,
+            hasControls: false,
+            hasBorders: false,
+            x1: options.x1 || -100,
+            y1: options.y1 || -100,
+            x2: options.x2 || -100,
+            y2: options.y2 || -100,
+            force: null,
+            start_node: null, //what node the member is connected to at it's start
+            end_node: null //what node the member is connected to at it's end
+        });
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            force: this.get('force'),
+            start_node: this.get('start_node'),
+            end_node: this.get('end_node')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
     }
-    return this;
-}
+});
 
-fabric.Line.prototype.moveNodes=function() {
-	if(this.start_node && this.end_node){
-		console.log(this.get('x1'));
-		// this.start_node.set({left: this.x1, top: this.y1});
-		// this.end_node.set({left: this.x2, top: this.y2});
-
-
-		// this.start_node.moveMembers();
-		// this.end_node.moveMembers();
-	}
-};
-
-module.exports = Member;
+module.exports=Member;

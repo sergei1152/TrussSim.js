@@ -54,7 +54,7 @@ $('#add-node-button').on('click',function(){
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
 		ModeController.mode='add_node';
 		ModeController.new_node=new Node();
-		ModeController.canvas.add(ModeController.new_node);
+		ModeController.canvas.add(ModeController.new_node); //adds the new node to the canvas
 	}
 });
 

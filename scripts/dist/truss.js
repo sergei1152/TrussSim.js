@@ -104,6 +104,7 @@ module.exports = function(canvas, ModeController) {
 
     //Handles movement of new nodes and new members
     canvas.on('mouse:move', function(event) {
+        //if in 'add-node' mode
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
@@ -111,9 +112,9 @@ module.exports = function(canvas, ModeController) {
             });
             canvas.renderAll();
         }
-        //if in add member mode and the start of the new member has already been determined
-        else if (ModeController.mode === 'add_member' && (ModeController.new_member.placedStart && !ModeController.new_member.placedEnd)) {
-            ModeController.new_member.line.set({ //set the end of the member to follow the cursor
+        //if in 'add-member' mode and the start of the member has been placed already
+        else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
+            ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
                 'y2': event.e.y - 105
             });
@@ -124,8 +125,7 @@ module.exports = function(canvas, ModeController) {
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
         if (ModeController.mode === 'add_node') {
-            //for some reason have to remove and re-add node to avoid weird glitcheness
-            canvas.remove(ModeController.new_node);
+            canvas.remove(ModeController.new_node);//for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
             canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
@@ -133,30 +133,31 @@ module.exports = function(canvas, ModeController) {
         }
 
         else if (ModeController.mode === 'add_member') {
-            if (event.target.type === 'circle') {
-                if (!ModeController.new_member.placedStart) { //if the member's start has not been determined yet
-                    ModeController.new_member.line.set({ //position the start of the member to be at the center of the node
+            if (event.target && event.target.type === 'node') { //if a node has been clicked on
+                if (!ModeController.new_member.start_node) { //if the member's start has not been determined yet
+                    ModeController.new_member.set({ //position the start of the member to be at the center of the node
                         x1: event.target.left,
                         y1: event.target.top,
                         x2: event.target.left,
                         y2: event.target.top
                     });
-                    ModeController.new_member.line.start_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member.line);
-                    ModeController.new_member.placedStart = true;
-                } else { //if the new member already has a starting node
-                    ModeController.new_member.line.set({ //place the end of the node at the center of the selected node
+
+                    ModeController.new_member.start_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member);
+                    canvas.renderAll();
+                } else if(ModeController.new_member.start_node && !ModeController.new_member.end_node){ //if the new member already has a starting node and the end has not been determined yet
+                    ModeController.new_member.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
-                    ModeController.new_member.line.end_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member.line);
-                    ModeController.new_member.placedEnd = true;
+                    ModeController.new_member.end_node=event.target;
+                    event.target.connected_members.push(ModeController.new_member); //TODO REMOVE ABILITY FOR START NODE TO BE SAME AS END NODE
 
-                    canvas.remove(ModeController.new_member.line); //re-add the member to avoid weird glitchiness
-                    canvas.add(ModeController.new_member.line);
-                    canvas.sendToBack(ModeController.new_member.line);
-                    ModeController.new_member = new Member(-100, -100, canvas); //create a new member while leaving the old one in the canvas
+                    canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
+                    canvas.add(ModeController.new_member);
+                    canvas.sendToBack(ModeController.new_member);
+                    ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    canvas.add(ModeController.new_member);
                 }
             }
         }
@@ -190,14 +191,9 @@ module.exports = function(canvas, ModeController) {
     });
 
     canvas.on('object:moving', function(event) {
-        if(event.target.type=='circle'){ //if a node is moving
+        if(event.target.type=='node'){ //if a node is moving
             var node=event.target;
-            node.moveMembers();
-        }
-
-        if(event.target.type=='line'){ //if a member is being moves
-            // var member=event.target;
-            // member.moveNodes();        
+            node.moveMembers(canvas);
         }
     });
 
@@ -216,43 +212,49 @@ module.exports = function(canvas, ModeController) {
     });
 };
 },{"./Car":1,"./Member":4,"./Node":6}],4:[function(require,module,exports){
-function Member(left, top, canv) {
-    this.line = new fabric.Line([left, top, left, top], {
-        fill: 'red',
-        stroke: 'blue',
-        strokeWidth: 5,
-        selectable: false,
-        hasControls: false,
-        hasBorders: false
-    });
-    this.line.force = null; //positive inficates tensile, negative indicates compressive
-    this.line.start_node = null;
-    this.line.end_node = null;
+var Member = fabric.util.createClass(fabric.Line, {
+    type: 'member',
 
-    this.placed_start = false; //whether the member's start position has been placed on a node
-    this.placed_end = false; //whether a member's end position has been placed on a node
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
 
-    if (canv) {
-        Member.canvas = canv;
-        Member.canvas.add(this.line);
-        Member.canvas.sendToBack(this.line);
+        this.callSuper('initialize', options);
+
+        //settings default values of the most important properties
+        this.set({
+            fill: 'red',
+            stroke: 'red',
+            strokeWidth: 5,
+            strokeLineJoin : "round",
+            selectable: false,
+            hasControls: false,
+            hasBorders: false,
+            x1: options.x1 || -100,
+            y1: options.y1 || -100,
+            x2: options.x2 || -100,
+            y2: options.y2 || -100,
+            force: null,
+            start_node: null, //what node the member is connected to at it's start
+            end_node: null //what node the member is connected to at it's end
+        });
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            force: this.get('force'),
+            start_node: this.get('start_node'),
+            end_node: this.get('end_node')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
     }
-    return this;
-}
+});
 
-fabric.Line.prototype.moveNodes=function() {
-	if(this.start_node && this.end_node){
-		console.log(this.get('x1'));
-		// this.start_node.set({left: this.x1, top: this.y1});
-		// this.end_node.set({left: this.x2, top: this.y2});
-
-
-		// this.start_node.moveMembers();
-		// this.end_node.moveMembers();
-	}
-};
-
-module.exports = Member;
+module.exports=Member;
 },{}],5:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
@@ -310,7 +312,7 @@ $('#add-node-button').on('click',function(){
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
 		ModeController.mode='add_node';
 		ModeController.new_node=new Node();
-		ModeController.canvas.add(ModeController.new_node);
+		ModeController.canvas.add(ModeController.new_node); //adds the new node to the canvas
 	}
 });
 
@@ -374,7 +376,7 @@ Node.prototype.moveMembers = function(canvas) {
         //Re-adding the members to avoing weird glitchiness
         canvas.remove(this.connected_members[i]);
         canvas.add(this.connected_members[i]);
-        canvas.sendToBack(this.connected_members[i]);
+        canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
     }
 };
 
