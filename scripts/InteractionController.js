@@ -108,10 +108,10 @@ module.exports = function(canvas, ModeController) {
       var car = new Car({
           width: 100,
           height: 50,
-          left: 100,
-          top: 100,
+          left: 50,
+          top: canvas.getHeight()/2-40,
           label: 'Truck',
-          length: 10,
+          length: 6,
           weight: 7.5
       });
       canvas.add(car);

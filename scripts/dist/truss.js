@@ -248,10 +248,10 @@ module.exports = function(canvas, ModeController) {
       var car = new Car({
           width: 100,
           height: 50,
-          left: 100,
-          top: 100,
+          left: 50,
+          top: canvas.getHeight()/2-40,
           label: 'Truck',
-          length: 10,
+          length: 6,
           weight: 7.5
       });
       canvas.add(car);
@@ -460,6 +460,7 @@ module.exports=ResizeController;
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
+  var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
@@ -475,6 +476,23 @@ module.exports=ResizeController;
 
   InteractionController(canvas, ModeController);
 
+  //Adding inital support nodes
+  var supportA=new Node();
+  var supportB=new Node();
+  supportA.set({
+    support: true,
+    left: canvas.getWidth()/8,
+    top:canvas.getHeight()/2,
+    stroke: '#000'
+  });
+  supportB.set({
+    support: true,
+    left: canvas.getWidth()*7/8,
+    top:canvas.getHeight()/2,
+    stroke: '#000'
+  });
+  canvas.add(supportA);
+  canvas.add(supportB);
 
 
-},{"./Grid":3,"./InteractionController":4,"./ModeController":6,"./ResizeController":8}]},{},[9]);
+},{"./Grid":3,"./InteractionController":4,"./ModeController":6,"./Node":7,"./ResizeController":8}]},{},[9]);
