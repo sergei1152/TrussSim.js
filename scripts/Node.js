@@ -20,6 +20,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
             hasControls: false,
             hasBorders: false,
             support: options.support || false,
+            floor_beam: options.floor_beam || false,
             external_force: [0,0],
             connected_members: []
         });
