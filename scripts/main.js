@@ -2,6 +2,7 @@
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
+  var EntityController=require('./EntityController');
   var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
@@ -25,14 +26,18 @@
     support: true,
     left: canvas.getWidth()/8,
     top:canvas.getHeight()/2,
-    stroke: '#000'
+    stroke: '#000',
+    lockMovementY: true
   });
   supportB.set({
     support: true,
     left: canvas.getWidth()*7/8,
     top:canvas.getHeight()/2,
-    stroke: '#000'
+    stroke: '#000',
+    lockMovementY: true
   });
+  EntityController.supportA=supportA;
+  EntityController.supportB=supportB;
   canvas.add(supportA);
   canvas.add(supportB);
 

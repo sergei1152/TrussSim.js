@@ -1,9 +1,36 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var E=require('./EntityController');
+var Grid=require('./Grid');
+
+function calculateSupportReactions(){
+	Grid.calcGridMeter();
+	E.car.width=E.car_length*Grid.grid_size*Grid.grid_meter; //recalculating the car width for the canvas
+	var car_length_px=E.car_length*Grid.grid_size*Grid.grid_meter; //converting the car length from meters to pixels
+	var bridge_length_px=E.bridge_length*Grid.grid_size*Grid.grid_meter; //converting bridge length in meters to pixels
+
+	 //if the car is just starting to enter the bridge
+	if(E.supportA.left-E.car.left<car_length_px/2 && E.supportA.left-E.car.left>-car_length_px/2){
+		var exposed_car_length_px=E.car.left+car_length_px/2-E.supportA.left; //how much of the car length is inside the bridge
+		var actual_weight=(E.car_weight/car_length_px)*exposed_car_length_px;
+		var distance_a_centroid_px=exposed_car_length_px/2;
+		E.supportA.external_force[1]=(actual_weight*(bridge_length_px-distance_a_centroid_px))/(bridge_length_px);
+		E.supportB.external_force[1]=(actual_weight*(distance_a_centroid_px))/(bridge_length_px);
+		console.log('Support Reaction A:'+E.supportA.external_force[1]);
+		console.log('Support Reaction B:'+E.supportB.external_force[1]);
+	}
+	else if( E.supportA.left-E.car.left<=-150 && E.supportB.left-E.car.left>=150){
+
+	}
+
+}
+module.exports=function (){
+	calculateSupportReactions();
+};
+
+},{"./EntityController":3,"./Grid":4}],2:[function(require,module,exports){
 var Car = fabric.util.createClass(fabric.Rect, {
 
     type: 'car',
-    weight: null,
-    length: null,
 
     initialize: function(options) {
         if (!options) {
@@ -12,8 +39,6 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
         this.callSuper('initialize', options);
         this.set('label', options.label || '');
-        this.set('weight', options.weight || 7.5); //set the weight and length of the car
-        this.set('length', options.length || 6);
         
         //Restricting movement of the car by player to only the x-axis
         this.set({
@@ -42,12 +67,18 @@ var Car = fabric.util.createClass(fabric.Rect, {
 });
 
 module.exports = Car;
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 //Keeps track of all the nodes and members in the bridge design
 var EntityController={
+	car: null,
+	car_length: 6,
+	car_weight: 7.5,
+	supportA: null,
+	supportB: null,
+	bridge_length: 15,
 	nodes: [],
 	members:[],
-	num_nodes:0,
+	num_nodes:2,
 	num_members:0,
 	addNode:function(node){
 		this.num_nodes+=1;
@@ -84,11 +115,13 @@ var EntityController={
 };
 
 module.exports=EntityController;
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
+var EntityController=require('./EntityController');
 var Grid = {
     canvas: null,
     grid_size: 50,
     min_grid_size:14,
+    grid_meter: 1, //number of grid squares per meter
     lines: [], //to keep track of the lines created so they can be removed
 
     //Removes the current Grid
@@ -123,6 +156,11 @@ var Grid = {
             Grid.canvas.add(line);
             Grid.canvas.sendToBack(line);
         }
+    },
+    calcGridMeter: function(){
+        if(EntityController.supportA && EntityController.supportB){
+            this.grid_meter=(EntityController.supportB.left-EntityController.supportA.left)/(this.grid_size*EntityController.bridge_length);
+        }
     }
 };
 
@@ -137,11 +175,13 @@ $('#grid-size-input').change(function() {
 });
 
 module.exports = Grid;
-},{}],4:[function(require,module,exports){
+},{"./EntityController":3}],5:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
 var Car=require('./Car');
+var Grid=require('./Grid');
 var EntityController=require('./EntityController');
+var Calculate=require('./Calculate');
 
 module.exports = function(canvas, ModeController) {
 
@@ -242,23 +282,33 @@ module.exports = function(canvas, ModeController) {
             var node=event.target;
             node.moveMembers(canvas);
         }
+        else if(event.target.type=='car'){ 
+            Calculate();
+        }
     });
 
     $('#simulation-button').on('click', function(){
-      var car = new Car({
-          width: 100,
-          height: 50,
+      if(EntityController.isValid()){ //if the bridge design is not valid
+        alert('The bridge design is not valid and does not satisfy the M=2N-3 condition');
+      }
+      else if(!EntityController.car){
+        var car = new Car({
+          width: EntityController.car_length*Grid.grid_meter*Grid.grid_size,
+          height: Grid.grid_size,
           left: 50,
           top: canvas.getHeight()/2-40,
           label: 'Truck',
-          length: 6,
-          weight: 7.5
+          length: EntityController.car_length,
+          weight: EntityController.car_weight
       });
+      EntityController.car=car;
       canvas.add(car);
+      }
+      Calculate();
       return false;
     });
 };
-},{"./Car":1,"./EntityController":2,"./Member":5,"./Node":7}],5:[function(require,module,exports){
+},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":4,"./Member":6,"./Node":8}],6:[function(require,module,exports){
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -302,7 +352,7 @@ var Member = fabric.util.createClass(fabric.Line, {
 });
 
 module.exports=Member;
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
@@ -365,7 +415,7 @@ $('#add-node-button').on('click',function(){
 
 module.exports=ModeController;
 
-},{"./Member":5,"./Node":7}],7:[function(require,module,exports){
+},{"./Member":6,"./Node":8}],8:[function(require,module,exports){
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
 
@@ -388,7 +438,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
             hasControls: false,
             hasBorders: false,
             support: options.support || false,
-            external_forces: [],
+            external_force: [0,0],
             connected_members: []
         });
     },
@@ -428,7 +478,7 @@ Node.prototype.moveMembers = function(canvas) {
 };
 
 module.exports=Node;
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -455,11 +505,12 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
+  var EntityController=require('./EntityController');
   var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
@@ -483,16 +534,20 @@ module.exports=ResizeController;
     support: true,
     left: canvas.getWidth()/8,
     top:canvas.getHeight()/2,
-    stroke: '#000'
+    stroke: '#000',
+    lockMovementY: true
   });
   supportB.set({
     support: true,
     left: canvas.getWidth()*7/8,
     top:canvas.getHeight()/2,
-    stroke: '#000'
+    stroke: '#000',
+    lockMovementY: true
   });
+  EntityController.supportA=supportA;
+  EntityController.supportB=supportB;
   canvas.add(supportA);
   canvas.add(supportB);
 
 
-},{"./Grid":3,"./InteractionController":4,"./ModeController":6,"./Node":7,"./ResizeController":8}]},{},[9]);
+},{"./EntityController":3,"./Grid":4,"./InteractionController":5,"./ModeController":7,"./Node":8,"./ResizeController":9}]},{},[10]);

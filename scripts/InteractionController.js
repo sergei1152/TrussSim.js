@@ -1,7 +1,9 @@
 var Node=require('./Node');
 var Member=require('./Member');
 var Car=require('./Car');
+var Grid=require('./Grid');
 var EntityController=require('./EntityController');
+var Calculate=require('./Calculate');
 
 module.exports = function(canvas, ModeController) {
 
@@ -102,19 +104,29 @@ module.exports = function(canvas, ModeController) {
             var node=event.target;
             node.moveMembers(canvas);
         }
+        else if(event.target.type=='car'){ 
+            Calculate();
+        }
     });
 
     $('#simulation-button').on('click', function(){
-      var car = new Car({
-          width: 100,
-          height: 50,
+      if(EntityController.isValid()){ //if the bridge design is not valid
+        alert('The bridge design is not valid and does not satisfy the M=2N-3 condition');
+      }
+      else if(!EntityController.car){
+        var car = new Car({
+          width: EntityController.car_length*Grid.grid_meter*Grid.grid_size,
+          height: Grid.grid_size,
           left: 50,
           top: canvas.getHeight()/2-40,
           label: 'Truck',
-          length: 6,
-          weight: 7.5
+          length: EntityController.car_length,
+          weight: EntityController.car_weight
       });
+      EntityController.car=car;
       canvas.add(car);
+      }
+      Calculate();
       return false;
     });
 };

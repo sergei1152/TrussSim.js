@@ -1,8 +1,14 @@
 //Keeps track of all the nodes and members in the bridge design
 var EntityController={
+	car: null,
+	car_length: 6,
+	car_weight: 7.5,
+	supportA: null,
+	supportB: null,
+	bridge_length: 15,
 	nodes: [],
 	members:[],
-	num_nodes:0,
+	num_nodes:2,
 	num_members:0,
 	addNode:function(node){
 		this.num_nodes+=1;
