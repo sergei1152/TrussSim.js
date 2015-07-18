@@ -1,7 +1,9 @@
+var EntityController=require('./EntityController');
 var Grid = {
     canvas: null,
     grid_size: 50,
     min_grid_size:14,
+    grid_meter: 1, //number of grid squares per meter
     lines: [], //to keep track of the lines created so they can be removed
 
     //Removes the current Grid
@@ -35,6 +37,11 @@ var Grid = {
             Grid.lines.push(line);
             Grid.canvas.add(line);
             Grid.canvas.sendToBack(line);
+        }
+    },
+    calcGridMeter: function(){
+        if(EntityController.supportA && EntityController.supportB){
+            this.grid_meter=(EntityController.supportB.left-EntityController.supportA.left)/(this.grid_size*EntityController.bridge_length);
         }
     }
 };
