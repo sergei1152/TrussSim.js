@@ -10,7 +10,7 @@ var Member = fabric.util.createClass(fabric.Line, {
 
         //settings default values of the most important properties
         this.set({
-            fill: 'red',
+            fill: 'blue',
             stroke: 'red',
             strokeWidth: 5,
             strokeLineJoin : "round",

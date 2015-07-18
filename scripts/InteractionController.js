@@ -47,13 +47,13 @@ module.exports = function(canvas, ModeController) {
                     ModeController.new_member.start_node=event.target;
                     event.target.connected_members.push(ModeController.new_member);
                     canvas.renderAll();
-                } else if(ModeController.new_member.start_node && !ModeController.new_member.end_node){ //if the new member already has a starting node and the end has not been determined yet
+                } else if(ModeController.new_member.start_node && !ModeController.new_member.end_node && event.target!=ModeController.new_member.start_node){ //if the new member already has a starting node and the end has not been determined yet
                     ModeController.new_member.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
                     ModeController.new_member.end_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member); //TODO REMOVE ABILITY FOR START NODE TO BE SAME AS END NODE
+                    event.target.connected_members.push(ModeController.new_member); 
 
                     canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member);
