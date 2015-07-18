@@ -11,10 +11,10 @@ var Member = fabric.util.createClass(fabric.Line, {
         //settings default values of the most important properties
         this.set({
             fill: 'blue',
-            stroke: 'red',
-            strokeWidth: 5,
+            stroke: 'grey',
+            strokeWidth: 10,
             strokeLineJoin : "round",
-            selectable: false,
+            selectable: true, //settings this to false would disable the eraser from getting rid of it
             hasControls: false,
             hasBorders: false,
             x1: options.x1 || -100,

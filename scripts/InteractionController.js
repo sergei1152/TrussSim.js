@@ -1,6 +1,7 @@
 var Node=require('./Node');
 var Member=require('./Member');
 var Car=require('./Car');
+var EntityController=require('./EntityController');
 
 module.exports = function(canvas, ModeController) {
 
@@ -30,8 +31,10 @@ module.exports = function(canvas, ModeController) {
             canvas.remove(ModeController.new_node);//for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
             canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
+            EntityController.addNode(ModeController.new_node); 
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
             canvas.add(ModeController.new_node); //adding the new node to the canvas
+            console.log(EntityController);
         }
 
         else if (ModeController.mode === 'add_member') {
@@ -58,8 +61,10 @@ module.exports = function(canvas, ModeController) {
                     canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member);
                     canvas.sendToBack(ModeController.new_member);
+                    EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
                     canvas.add(ModeController.new_member);
+                    console.log(EntityController);
                 }
             }
         }

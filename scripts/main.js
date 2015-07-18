@@ -2,7 +2,6 @@
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
-
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
@@ -17,4 +16,5 @@
 
 
   InteractionController(canvas, ModeController);
+
 

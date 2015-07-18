@@ -43,6 +43,48 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
 module.exports = Car;
 },{}],2:[function(require,module,exports){
+//Keeps track of all the nodes and members in the bridge design
+var EntityController={
+	nodes: [],
+	members:[],
+	num_nodes:0,
+	num_members:0,
+	addNode:function(node){
+		this.num_nodes+=1;
+		this.nodes.push(node);
+	},
+	addMember:function(member){
+		this.num_members+=1;
+		this.members.push(member);
+	},
+	removeNode:function(node){
+		this.num_nodes-=1;
+		for (var i=0; i< this.nodes.length; i++){
+			if (this.nodes[i]===node){
+				this.nodes.splice(i,1);
+				break;
+			}
+		}
+	},
+	removeMember:function(member){
+		this.num_members-=1;
+		for (var i=0; i< this.members.length; i++){
+			if (this.members[i]===member){
+				this.members.splice(i,1);
+				break;
+			}
+		}
+	},
+	isValid: function(){
+		if(this.num_members===2*this.num_nodes-3){
+			return true;
+		}
+		return false;
+	}
+};
+
+module.exports=EntityController;
+},{}],3:[function(require,module,exports){
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -95,10 +137,11 @@ $('#grid-size-input').change(function() {
 });
 
 module.exports = Grid;
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
 var Car=require('./Car');
+var EntityController=require('./EntityController');
 
 module.exports = function(canvas, ModeController) {
 
@@ -128,8 +171,10 @@ module.exports = function(canvas, ModeController) {
             canvas.remove(ModeController.new_node);//for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
             canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
+            EntityController.addNode(ModeController.new_node); 
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
             canvas.add(ModeController.new_node); //adding the new node to the canvas
+            console.log(EntityController);
         }
 
         else if (ModeController.mode === 'add_member') {
@@ -156,8 +201,10 @@ module.exports = function(canvas, ModeController) {
                     canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member);
                     canvas.sendToBack(ModeController.new_member);
+                    EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
                     canvas.add(ModeController.new_member);
+                    console.log(EntityController);
                 }
             }
         }
@@ -211,7 +258,7 @@ module.exports = function(canvas, ModeController) {
       return false;
     });
 };
-},{"./Car":1,"./Member":4,"./Node":6}],4:[function(require,module,exports){
+},{"./Car":1,"./EntityController":2,"./Member":5,"./Node":7}],5:[function(require,module,exports){
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -225,10 +272,10 @@ var Member = fabric.util.createClass(fabric.Line, {
         //settings default values of the most important properties
         this.set({
             fill: 'blue',
-            stroke: 'red',
-            strokeWidth: 5,
+            stroke: 'grey',
+            strokeWidth: 10,
             strokeLineJoin : "round",
-            selectable: false,
+            selectable: true, //settings this to false would disable the eraser from getting rid of it
             hasControls: false,
             hasBorders: false,
             x1: options.x1 || -100,
@@ -255,7 +302,7 @@ var Member = fabric.util.createClass(fabric.Line, {
 });
 
 module.exports=Member;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
@@ -318,7 +365,7 @@ $('#add-node-button').on('click',function(){
 
 module.exports=ModeController;
 
-},{"./Member":4,"./Node":6}],6:[function(require,module,exports){
+},{"./Member":5,"./Node":7}],7:[function(require,module,exports){
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
 
@@ -381,7 +428,7 @@ Node.prototype.moveMembers = function(canvas) {
 };
 
 module.exports=Node;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -408,12 +455,11 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
-
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
@@ -430,4 +476,5 @@ module.exports=ResizeController;
   InteractionController(canvas, ModeController);
 
 
-},{"./Grid":2,"./InteractionController":3,"./ModeController":5,"./ResizeController":7}]},{},[8]);
+
+},{"./Grid":3,"./InteractionController":4,"./ModeController":6,"./ResizeController":8}]},{},[9]);
