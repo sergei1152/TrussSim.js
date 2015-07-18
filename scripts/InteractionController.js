@@ -7,7 +7,7 @@ module.exports = function(canvas, ModeController) {
     //Handles movement of new nodes and new members
     canvas.on('mouse:move', function(event) {
         if (ModeController.mode === 'add_node') {
-            ModeController.new_node.circle.set({ //set the new node to follow the cursor
+            ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
                 'top': event.e.y - 105
             });
@@ -27,10 +27,11 @@ module.exports = function(canvas, ModeController) {
     canvas.on('mouse:up', function(event) {
         if (ModeController.mode === 'add_node') {
             //for some reason have to remove and re-add node to avoid weird glitcheness
-            canvas.remove(ModeController.new_node.circle);
-            canvas.add(ModeController.new_node.circle);
-            canvas.bringToFront(ModeController.new_node.circle);
-            ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas); //create a new node, while leaving the old one in the canvas
+            canvas.remove(ModeController.new_node);
+            canvas.add(ModeController.new_node);
+            canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
+            ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
+            canvas.add(ModeController.new_node); //adding the new node to the canvas
         }
 
         else if (ModeController.mode === 'add_member') {

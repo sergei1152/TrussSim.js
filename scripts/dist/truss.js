@@ -105,7 +105,7 @@ module.exports = function(canvas, ModeController) {
     //Handles movement of new nodes and new members
     canvas.on('mouse:move', function(event) {
         if (ModeController.mode === 'add_node') {
-            ModeController.new_node.circle.set({ //set the new node to follow the cursor
+            ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
                 'top': event.e.y - 105
             });
@@ -125,10 +125,11 @@ module.exports = function(canvas, ModeController) {
     canvas.on('mouse:up', function(event) {
         if (ModeController.mode === 'add_node') {
             //for some reason have to remove and re-add node to avoid weird glitcheness
-            canvas.remove(ModeController.new_node.circle);
-            canvas.add(ModeController.new_node.circle);
-            canvas.bringToFront(ModeController.new_node.circle);
-            ModeController.new_node = new Node(event.e.x, event.e.y - 105, canvas); //create a new node, while leaving the old one in the canvas
+            canvas.remove(ModeController.new_node);
+            canvas.add(ModeController.new_node);
+            canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
+            ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
+            canvas.add(ModeController.new_node); //adding the new node to the canvas
         }
 
         else if (ModeController.mode === 'add_member') {
@@ -253,6 +254,8 @@ fabric.Line.prototype.moveNodes=function() {
 
 module.exports = Member;
 },{}],5:[function(require,module,exports){
+//Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
+//TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
 var Member=require('./Member');
 
@@ -263,15 +266,17 @@ var ModeController={
 	new_node:null,
 	new_member: null,
 
+	//removes the currently unplaced node from the canvas
 	clearNode:function(){
 		if(ModeController.new_node){
-			ModeController.canvas.remove(ModeController.new_node.circle);
+			ModeController.canvas.remove(ModeController.new_node);
 			ModeController.new_node=null;
 		}
 	},
+	//removes the currently unplaced member from the canvas
 	clearMember:function(){
 		if(ModeController.new_member){
-			ModeController.canvas.remove(ModeController.new_member.line);
+			ModeController.canvas.remove(ModeController.new_member);
 			ModeController.new_member=null;
 		}
 	}
@@ -290,51 +295,70 @@ $('#move-button').on('click',function(){
 });
 
 $('#add-member-button').on('click',function(){
-	ModeController.clearNode(); 
-	ModeController.canvas.defaultCursor='auto';
-	ModeController.canvas.hoverCursor='copy';
+	ModeController.clearNode(); //gets rid of any existing unplaced nodes
+
 	if(ModeController.mode!=='add_member'){ //if not already in add-member mode
 		ModeController.mode='add_member';
-		ModeController.new_member=new Member(-100,-100, ModeController.canvas);
+		ModeController.new_member=new Member();
+		ModeController.canvas.add(ModeController.new_member); //adds the new member to the canvas
 	}
 });
 
 $('#add-node-button').on('click',function(){
-	ModeController.clearMember();
-	ModeController.canvas.defaultCursor='copy';
+	ModeController.clearMember(); //gets rid of any existing unplaced members
+
 	if(ModeController.mode!=='add_node'){ //if not already in add node mode
-		ModeController.new_node=new Node(-100,-100, ModeController.canvas);
 		ModeController.mode='add_node';
+		ModeController.new_node=new Node();
+		ModeController.canvas.add(ModeController.new_node);
 	}
 });
 
 module.exports=ModeController;
 
 },{"./Member":4,"./Node":6}],6:[function(require,module,exports){
-function Node(left, top, canv) {
-    this.circle = new fabric.Circle({
-        left: left,
-        top: top,
-        strokeWidth: 5,
-        radius: 12,
-        fill: '#fff',
-        stroke: '#666',
-        selectable: true
-    });
+var Node = fabric.util.createClass(fabric.Circle, {
+    type: 'node',
 
-    this.circle.hasControls = this.circle.hasBorders = false;
-    this.circle.connected_members = [];
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
 
-    if (canv) {
-        Node.canvas = canv;
-        Node.canvas.add(this.circle);
-        Node.canvas.bringToFront(this.circle);
+        this.callSuper('initialize', options);
+
+        //settings default values of the most important properties
+        this.set({
+            left: options.left || -100,
+            top: options.top || -100,
+            strokeWidth: options.strokeWidth || 5,
+            radius: options.radius || 12,
+            fill: options.fill || '#FFFFFF',
+            stroke: options.stroke || '#666',
+            selectable: options.selectable || true,
+            hasControls: false,
+            hasBorders: false,
+            support: options.support || false,
+            external_forces: [],
+            connected_members: []
+        });
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            support: this.get('support'),
+            external_forces: this.get('external_forces'),
+            connected_members: this.get('connected_members')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
     }
-    
-    return this;
-}
+});
 
-fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to make this a prototype
+//Moves the connected members of the node to its position
+Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {
         if (this.connected_members[i].start_node == this) { //if the start of the member is connected to the this
             this.connected_members[i].set({
@@ -348,13 +372,13 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
             });
         }
         //Re-adding the members to avoing weird glitchiness
-        Node.canvas.remove(this.connected_members[i]);
-        Node.canvas.add(this.connected_members[i]);
-        Node.canvas.sendToBack(this.connected_members[i]);
+        canvas.remove(this.connected_members[i]);
+        canvas.add(this.connected_members[i]);
+        canvas.sendToBack(this.connected_members[i]);
     }
 };
 
-module.exports = Node;
+module.exports=Node;
 },{}],7:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
@@ -391,10 +415,9 @@ module.exports=ResizeController;
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
-
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
-
+  
   ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;

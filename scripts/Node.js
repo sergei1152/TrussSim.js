@@ -1,27 +1,45 @@
-function Node(left, top, canv) {
-    this.circle = new fabric.Circle({
-        left: left,
-        top: top,
-        strokeWidth: 5,
-        radius: 12,
-        fill: '#fff',
-        stroke: '#666',
-        selectable: true
-    });
+var Node = fabric.util.createClass(fabric.Circle, {
+    type: 'node',
 
-    this.circle.hasControls = this.circle.hasBorders = false;
-    this.circle.connected_members = [];
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
 
-    if (canv) {
-        Node.canvas = canv;
-        Node.canvas.add(this.circle);
-        Node.canvas.bringToFront(this.circle);
+        this.callSuper('initialize', options);
+
+        //settings default values of the most important properties
+        this.set({
+            left: options.left || -100,
+            top: options.top || -100,
+            strokeWidth: options.strokeWidth || 5,
+            radius: options.radius || 12,
+            fill: options.fill || '#FFFFFF',
+            stroke: options.stroke || '#666',
+            selectable: options.selectable || true,
+            hasControls: false,
+            hasBorders: false,
+            support: options.support || false,
+            external_forces: [],
+            connected_members: []
+        });
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            support: this.get('support'),
+            external_forces: this.get('external_forces'),
+            connected_members: this.get('connected_members')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
     }
-    
-    return this;
-}
+});
 
-fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to make this a prototype
+//Moves the connected members of the node to its position
+Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {
         if (this.connected_members[i].start_node == this) { //if the start of the member is connected to the this
             this.connected_members[i].set({
@@ -35,10 +53,10 @@ fabric.Circle.prototype.moveMembers = function() { //TODO: Figure out how to mak
             });
         }
         //Re-adding the members to avoing weird glitchiness
-        Node.canvas.remove(this.connected_members[i]);
-        Node.canvas.add(this.connected_members[i]);
-        Node.canvas.sendToBack(this.connected_members[i]);
+        canvas.remove(this.connected_members[i]);
+        canvas.add(this.connected_members[i]);
+        canvas.sendToBack(this.connected_members[i]);
     }
 };
 
-module.exports = Node;
+module.exports=Node;

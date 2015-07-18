@@ -6,10 +6,9 @@
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: true
   });
-
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
-
+  
   ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;
