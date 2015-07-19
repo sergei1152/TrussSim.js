@@ -1,4 +1,3 @@
-var EntityController=require('./EntityController');
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -39,8 +38,10 @@ var Grid = {
             Grid.canvas.sendToBack(line);
         }
     },
-    calcGridMeter: function(){
+    calcGridMeter: function(EntityController){
+        console.log(EntityController);
         if(EntityController.supportA && EntityController.supportB){
+
             this.grid_meter=(EntityController.supportB.left-EntityController.supportA.left)/(this.grid_size*EntityController.bridge_length);
         }
     }
