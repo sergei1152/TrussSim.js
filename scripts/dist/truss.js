@@ -4,38 +4,53 @@ var Grid=require('./Grid');
 
 function calculateSupportReactions(){
 	Grid.calcGridMeter();
+	E.calcCarLengthPx();
 	E.car.width=E.car_length*Grid.grid_size*Grid.grid_meter; //recalculating the car width for the canvas
-	var car_length_px=E.car_length*Grid.grid_size*Grid.grid_meter; //converting the car length from meters to pixels
 	var bridge_length_px=E.bridge_length*Grid.grid_size*Grid.grid_meter; //converting bridge length in meters to pixels
 	var actual_weight;
 	var distance_a_centroid_px;
 
 	 //if the car is just starting to enter the bridge
-	if(E.supportA.left-E.car.left<car_length_px/2 && E.supportA.left-E.car.left>-car_length_px/2){
-		var exposed_car_length_px=E.car.left+car_length_px/2-E.supportA.left; //how much of the car length is inside the bridge
-		actual_weight=(E.car_weight/car_length_px)*exposed_car_length_px;
+	if(E.supportA.left-E.car.left<E.car_length_px/2 && E.supportA.left-E.car.left>-E.car_length_px/2){
+		var exposed_car_length_px=E.car.left+E.car_length_px/2-E.supportA.left; //how much of the car length is inside the bridge
+		actual_weight=(E.car_weight/E.car_length_px)*exposed_car_length_px;
 		distance_a_centroid_px=exposed_car_length_px/2;
-		
 	}
 	//if the car is completely within the bridge (between A & B completely)
-	else if( E.supportA.left-E.car.left<=-car_length_px/2 && E.supportB.left-E.car.left>=car_length_px/2){
+	else if( E.supportA.left-E.car.left<=-E.car_length_px/2 && E.supportB.left-E.car.left>=E.car_length_px/2){
 		actual_weight=E.car_weight;
 		distance_a_centroid_px=E.car.left-E.supportA.left;
 	}
-	else if(E.supportB.left-E.car.left<car_length_px/2 && E.supportB.left-E.car.left>-car_length_px/2){
-		var remaining_car_length_px=car_length_px-(E.car.left+car_length_px/2-E.supportB.left); //how much of the car length is remaining within the bridge
-		actual_weight=(E.car_weight/car_length_px)*remaining_car_length_px;
+	else if(E.supportB.left-E.car.left<E.car_length_px/2 && E.supportB.left-E.car.left>-E.car_length_px/2){
+		var remaining_car_length_px=E.car_length_px-(E.car.left+E.car_length_px/2-E.supportB.left); //how much of the car length is remaining within the bridge
+		actual_weight=(E.car_weight/E.car_length_px)*remaining_car_length_px;
 		distance_a_centroid_px=E.supportB.left-remaining_car_length_px/2-E.supportA.left;
 	}
 
 	//calculate support reactions, and otherwise 0 if the car is completely out of the bridge and not touching the supports
 	E.supportA.external_force[1]=(actual_weight*(bridge_length_px-distance_a_centroid_px))/(bridge_length_px) || 0;
 	E.supportB.external_force[1]=(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0;
-	console.log('Support Reaction A:'+E.supportA.external_force[1]);
-	console.log('Support Reaction B:'+E.supportB.external_force[1]);
+	console.log(E.supportA.isCarOn());
+	// console.log('Support Reaction A:'+E.supportA.external_force[1]);
+	// console.log('Support Reaction B:'+E.supportB.external_force[1]);
 }
+
+function calculateWeightDistributionOfCar(){
+	var floor_beam_nodes=[];
+
+	//getting all the floor beam nodes
+	for (var i=0;i<E.nodes.length;i++){
+		if(E.nodes[i].floor_beam===true){
+			floor_beam_nodes.push(E.nodes[i]);
+
+		}
+	}
+
+}
+
 module.exports=function (){
 	calculateSupportReactions();
+	calculateWeightDistributionOfCar();
 };
 
 },{"./EntityController":3,"./Grid":4}],2:[function(require,module,exports){
@@ -79,10 +94,13 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
 module.exports = Car;
 },{}],3:[function(require,module,exports){
+var Grid=require('./Grid');
+
 //Keeps track of all the nodes and members in the bridge design
 var EntityController={
 	car: null,
 	car_length: 6,
+	car_length_px: null,
 	car_weight: 7.5,
 	supportA: null,
 	supportB: null,
@@ -122,11 +140,14 @@ var EntityController={
 			return true;
 		}
 		return false;
+	},
+	calcCarLengthPx: function(){
+		this.car_length_px=this.car_length*Grid.grid_size*Grid.grid_meter;
 	}
 };
 
 module.exports=EntityController;
-},{}],4:[function(require,module,exports){
+},{"./Grid":4}],4:[function(require,module,exports){
 var EntityController=require('./EntityController');
 var Grid = {
     canvas: null,
@@ -427,6 +448,8 @@ $('#add-node-button').on('click',function(){
 module.exports=ModeController;
 
 },{"./Member":6,"./Node":8}],8:[function(require,module,exports){
+var E=require('./EntityController');
+
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
 
@@ -489,8 +512,17 @@ Node.prototype.moveMembers = function(canvas) {
     }
 };
 
+Node.prototype.isCarOn=function(){
+    if(E.car){
+        if(this.left>=E.car.left-E.car_length_px/2 && this.left<=E.car.left+E.car_length_px/2){
+            return true;
+        }
+    }
+    return false;
+};
+
 module.exports=Node;
-},{}],9:[function(require,module,exports){
+},{"./EntityController":3}],9:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -540,26 +572,27 @@ module.exports=ResizeController;
   InteractionController(canvas, ModeController);
 
   //Adding inital support nodes
-  var supportA=new Node();
-  var supportB=new Node();
-  supportA.set({
+  var supportA=new Node({
     support: true,
-    floor_node: true,
+    floor_beam: true,
     left: canvas.getWidth()/8,
     top:canvas.getHeight()/2,
     stroke: '#F41313',
     lockMovementY: true
   });
-  supportB.set({
+  var supportB=new Node({
     support: true,
-    floor_node: true,
+    floor_beam: true,
     left: canvas.getWidth()*7/8,
     top:canvas.getHeight()/2,
     stroke: '#F41313',
     lockMovementY: true
   });
+  
   EntityController.supportA=supportA;
   EntityController.supportB=supportB;
+  EntityController.addNode(supportA);
+  EntityController.addNode(supportB);
   canvas.add(supportA);
   canvas.add(supportB);
 

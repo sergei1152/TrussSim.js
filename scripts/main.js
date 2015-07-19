@@ -20,26 +20,27 @@
   InteractionController(canvas, ModeController);
 
   //Adding inital support nodes
-  var supportA=new Node();
-  var supportB=new Node();
-  supportA.set({
+  var supportA=new Node({
     support: true,
-    floor_node: true,
+    floor_beam: true,
     left: canvas.getWidth()/8,
     top:canvas.getHeight()/2,
     stroke: '#F41313',
     lockMovementY: true
   });
-  supportB.set({
+  var supportB=new Node({
     support: true,
-    floor_node: true,
+    floor_beam: true,
     left: canvas.getWidth()*7/8,
     top:canvas.getHeight()/2,
     stroke: '#F41313',
     lockMovementY: true
   });
+  
   EntityController.supportA=supportA;
   EntityController.supportB=supportB;
+  EntityController.addNode(supportA);
+  EntityController.addNode(supportB);
   canvas.add(supportA);
   canvas.add(supportB);
 

@@ -1,7 +1,10 @@
+var Grid=require('./Grid');
+
 //Keeps track of all the nodes and members in the bridge design
 var EntityController={
 	car: null,
 	car_length: 6,
+	car_length_px: null,
 	car_weight: 7.5,
 	supportA: null,
 	supportB: null,
@@ -41,6 +44,9 @@ var EntityController={
 			return true;
 		}
 		return false;
+	},
+	calcCarLengthPx: function(){
+		this.car_length_px=this.car_length*Grid.grid_size*Grid.grid_meter;
 	}
 };
 

@@ -1,3 +1,5 @@
+var E=require('./EntityController');
+
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
 
@@ -58,6 +60,15 @@ Node.prototype.moveMembers = function(canvas) {
         canvas.add(this.connected_members[i]);
         canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
     }
+};
+
+Node.prototype.isCarOn=function(){
+    if(E.car){
+        if(this.left>=E.car.left-E.car_length_px/2 && this.left<=E.car.left+E.car_length_px/2){
+            return true;
+        }
+    }
+    return false;
 };
 
 module.exports=Node;
