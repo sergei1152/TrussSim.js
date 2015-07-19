@@ -11,6 +11,7 @@ var EntityController={
 	bridge_length: 15,
 	nodes: [],
 	members:[],
+	floor_nodes: [],
 	num_nodes:2,
 	num_members:0,
 	addNode:function(node){

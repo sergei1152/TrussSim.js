@@ -36,15 +36,7 @@ function calculateSupportReactions(){
 }
 
 function calculateWeightDistributionOfCar(){
-	var floor_beam_nodes=[];
-
-	//getting all the floor beam nodes
-	for (var i=0;i<E.nodes.length;i++){
-		if(E.nodes[i].floor_beam===true){
-			floor_beam_nodes.push(E.nodes[i]);
-
-		}
-	}
+	
 
 }
 
@@ -107,6 +99,7 @@ var EntityController={
 	bridge_length: 15,
 	nodes: [],
 	members:[],
+	floor_nodes: [],
 	num_nodes:2,
 	num_members:0,
 	addNode:function(node){
@@ -591,6 +584,8 @@ module.exports=ResizeController;
   
   EntityController.supportA=supportA;
   EntityController.supportB=supportB;
+  EntityController.floor_nodes.push(supportA);
+  EntityController.floor_nodes.push(supportB);
   EntityController.addNode(supportA);
   EntityController.addNode(supportB);
   canvas.add(supportA);
@@ -601,13 +596,14 @@ module.exports=ResizeController;
   for (var i=0;i<num_floor_beams;i++){
     var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
     var new_floor_node=new Node({
-    floor_beam: true,
-    left: supportA.left+(i+1)*spacing,
-    top:canvas.getHeight()/2,
-    stroke: '#000000',
-    lockMovementY: true
+      floor_beam: true,
+      left: supportA.left+(i+1)*spacing,
+      top:canvas.getHeight()/2,
+      stroke: '#000000',
+      lockMovementY: true
     });
     EntityController.addNode(new_floor_node);
+    EntityController.floor_nodes.push(new_floor_node);
     canvas.add(new_floor_node);
   }
 

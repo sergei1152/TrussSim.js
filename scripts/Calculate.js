@@ -35,15 +35,7 @@ function calculateSupportReactions(){
 }
 
 function calculateWeightDistributionOfCar(){
-	var floor_beam_nodes=[];
-
-	//getting all the floor beam nodes
-	for (var i=0;i<E.nodes.length;i++){
-		if(E.nodes[i].floor_beam===true){
-			floor_beam_nodes.push(E.nodes[i]);
-
-		}
-	}
+	
 
 }
 
