@@ -2,9 +2,9 @@ var E=require('./EntityController');
 var Grid=require('./Grid');
 
 function calculateSupportReactions(){
-	Grid.calcGridMeter();
+	Grid.calcGridMeter(E);
 	E.calcCarLengthPx();
-	E.car.width=E.car_length*Grid.grid_size*Grid.grid_meter; //recalculating the car width for the canvas
+	E.car.width=E.car_length_px; //recalculating the car width for the canvas
 	var bridge_length_px=E.bridge_length*Grid.grid_size*Grid.grid_meter; //converting bridge length in meters to pixels
 	var actual_weight;
 	var distance_a_centroid_px;
@@ -29,13 +29,83 @@ function calculateSupportReactions(){
 	//calculate support reactions, and otherwise 0 if the car is completely out of the bridge and not touching the supports
 	E.supportA.external_force[1]=(actual_weight*(bridge_length_px-distance_a_centroid_px))/(bridge_length_px) || 0;
 	E.supportB.external_force[1]=(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0;
-	console.log(E.supportA.isCarOn());
-	// console.log('Support Reaction A:'+E.supportA.external_force[1]);
-	// console.log('Support Reaction B:'+E.supportB.external_force[1]);
 }
 
 function calculateWeightDistributionOfCar(){
-	
+	var x, x1, x2, leftDistance, rightDistance;
+	for (var i=0;i<E.floor_nodes.length;i++){
+		if(!E.floor_nodes[i-1]){ //if left support node
+			if(E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the current node
+				x=E.car.left+E.car_length_px/2-E.floor_nodes[i].left; //portion of car on the right member (position of tail of car minus position of current node)
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				E.floor_nodes[i].external_force[1]-=(rightDistance-x/2)*E.car_weight*x/(rightDistance*E.car_length_px);
+			}
+			else if(E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on the current and right node
+				x=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of the car on the right member (position of right node minus position of current node)
+				E.floor_nodes[i].external_force[1]-=x*E.car_weight/(2*E.car_length_px);
+			}
+			else if(!E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is only on the right node
+				x=E.floor_nodes[i+1].left-(E.car.left-E.car_length_px/2); //portion of the car on the right member(position of right node minus position of tail of car)
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				E.floor_nodes[i].external_force[1]-=x*x*E.car_weight/(2*E.car_length_px*rightDistance);
+			}
+		}
+		else if(!E.floor_nodes[i+1]){ //if right support node
+			if(E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn()){ //if the car is only on the left member
+				x=E.car.left+E.car_length_px/2-E.floor_nodes[i-1].left;
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //distance from the current node to the left node
+				E.floor_nodes[i].external_force[1]-=x*x*E.car_weight/(2*E.car_length_px*leftDistance);
+			}
+			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn()){ //if the car is both on the left node and the current node
+				x=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				E.floor_nodes[i].external_force[1]-=x*E.car_weight/(2*E.car_length_px);
+			}
+			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn()){ //if the car is only on the support node
+				x=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2);
+				distanceLeft=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				E.floor_nodes[i].external_force[1]-=((distanceLeft-x/2)*x*E.car_weight)/(distanceLeft*E.car_length_px);
+			}
+		}
+		else if(E.floor_nodes[i-1] && E.floor_nodes[i+1]){ //if a regular floor node
+			if(E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the left member
+				x=E.car.left+E.car_length_px/2 -E.floor_nodes[i-1].left; //the portion of the car on the left member (the positon of the front of the car minus the position of the previous node)
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //distance from the current node to the left node
+				E.floor_nodes[i].external_force[1]=x*x*E.car_weight/(2*E.car_length_px*leftDistance);
+			}
+			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is both on the left node and the current node
+				x1=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //the portion of the car on the left member (the harizontal distance between the current node and the left node)
+				x2=E.car.left+E.car_length_px/2-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the front of the car minus the position of the current node)
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //the distance from the right node to the current node
+				E.floor_nodes[i].external_force[1]=x1/2*(E.car_weight/E.car_length_px)+(rightDistance-x2/2)*(E.car_weight*x2/E.car_length_px)/rightDistance;
+			}
+			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the current node
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				x1=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2); //the portion of the car on the left member (the position of the current node minus the position of the tail of the car)
+				x2=(E.car.left+E.car_length_px/2)-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the front of the car minus the position of the current node)
+				E.floor_nodes[i].external_force[1]=((leftDistance-x1/2)*x1/leftDistance+(rightDistance-x2/2)*x2/rightDistance)*E.car_weight/E.car_length_px;
+			}
+			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on the current and right node
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				x1=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2); //the portion of the car on the left member (the position of the current node minus the position of the tail of the car)
+				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the right node minus the position of the left node)
+				E.floor_nodes[i].external_force[1]=(leftDistance-x1/2)*E.car_weight*x1/(E.car_length_px*leftDistance)+(x2/2*E.car_weight)/E.car_length_px;
+			}
+			else if(!E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is only on the right node
+				x=E.floor_nodes[i+1].left-(E.car.left-E.car_length_px/2); //portion of car on right member (position of right node minus position of tail of car)
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				E.floor_nodes[i].external_force[1]=x*x*E.car_weight/(2*E.car_length_px*rightDistance);
+			}
+			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on all three nodes
+				x1=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //portion of car on left member (position of current node minus position of left member)
+				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of car on right member (position of right node minus position of current node)
+				E.floor_nodes[i].external_force[1]=(x1/2+x2/2)*E.car_weight/E.car_length_px;
+			}
+			else{
+				E.floor_nodes[i].external_force[1]=0;
+			}
+		}
+	}
 
 }
 

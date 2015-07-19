@@ -40,7 +40,6 @@
   EntityController.supportA=supportA;
   EntityController.supportB=supportB;
   EntityController.floor_nodes.push(supportA);
-  EntityController.floor_nodes.push(supportB);
   EntityController.addNode(supportA);
   EntityController.addNode(supportB);
   canvas.add(supportA);
@@ -61,4 +60,6 @@
     EntityController.floor_nodes.push(new_floor_node);
     canvas.add(new_floor_node);
   }
+  EntityController.floor_nodes.push(supportB);
+
 
