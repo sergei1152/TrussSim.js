@@ -28,8 +28,8 @@ function calculateSupportReactions(){
 	}
 
 	//calculate support reactions, and otherwise 0 if the car is completely out of the bridge and not touching the supports
-	E.supportA.external_force[1]=(actual_weight*(bridge_length_px-distance_a_centroid_px))/(bridge_length_px) || 0;
-	E.supportB.external_force[1]=(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0;
+	E.supportA.setForce(0,(actual_weight*(bridge_length_px-distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
+	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
 function calculateWeightDistributionOfCar(){
@@ -39,71 +39,71 @@ function calculateWeightDistributionOfCar(){
 			if(E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the current node
 				x=E.car.left+E.car_length_px/2-E.floor_nodes[i].left; //portion of car on the right member (position of tail of car minus position of current node)
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
-				E.floor_nodes[i].external_force[1]-=(rightDistance-x/2)*E.car_weight*x/(rightDistance*E.car_length_px);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-(rightDistance-x/2)*E.car_weight*x/(rightDistance*E.car_length_px),Grid.canvas);
 			}
 			else if(E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on the current and right node
 				x=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of the car on the right member (position of right node minus position of current node)
-				E.floor_nodes[i].external_force[1]-=x*E.car_weight/(2*E.car_length_px);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-x*E.car_weight/(2*E.car_length_px),Grid.canvas);
 			}
 			else if(!E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is only on the right node
 				x=E.floor_nodes[i+1].left-(E.car.left-E.car_length_px/2); //portion of the car on the right member(position of right node minus position of tail of car)
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
-				E.floor_nodes[i].external_force[1]-=x*x*E.car_weight/(2*E.car_length_px*rightDistance);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-x*x*E.car_weight/(2*E.car_length_px*rightDistance),Grid.canvas);
 			}
 		}
 		else if(!E.floor_nodes[i+1]){ //if right support node
 			if(E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn()){ //if the car is only on the left member
 				x=E.car.left+E.car_length_px/2-E.floor_nodes[i-1].left;
 				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //distance from the current node to the left node
-				E.floor_nodes[i].external_force[1]-=x*x*E.car_weight/(2*E.car_length_px*leftDistance);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-x*x*E.car_weight/(2*E.car_length_px*leftDistance),Grid.canvas);
 			}
 			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn()){ //if the car is both on the left node and the current node
 				x=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
-				E.floor_nodes[i].external_force[1]-=x*E.car_weight/(2*E.car_length_px);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-x*E.car_weight/(2*E.car_length_px),Grid.canvas);
 			}
 			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn()){ //if the car is only on the support node
 				x=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2);
 				distanceLeft=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
-				E.floor_nodes[i].external_force[1]-=((distanceLeft-x/2)*x*E.car_weight)/(distanceLeft*E.car_length_px);
+				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-((distanceLeft-x/2)*x*E.car_weight)/(distanceLeft*E.car_length_px),Grid.canvas);
 			}
 		}
 		else if(E.floor_nodes[i-1] && E.floor_nodes[i+1]){ //if a regular floor node
 			if(E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the left member
 				x=E.car.left+E.car_length_px/2 -E.floor_nodes[i-1].left; //the portion of the car on the left member (the positon of the front of the car minus the position of the previous node)
 				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //distance from the current node to the left node
-				E.floor_nodes[i].external_force[1]=x*x*E.car_weight/(2*E.car_length_px*leftDistance);
+				E.floor_nodes[i].setForce(0,-(x*x*E.car_weight/(2*E.car_length_px*leftDistance)),Grid.canvas);
 			}
 			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is both on the left node and the current node
 				x1=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //the portion of the car on the left member (the harizontal distance between the current node and the left node)
 				x2=E.car.left+E.car_length_px/2-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the front of the car minus the position of the current node)
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //the distance from the right node to the current node
-				E.floor_nodes[i].external_force[1]=x1/2*(E.car_weight/E.car_length_px)+(rightDistance-x2/2)*(E.car_weight*x2/E.car_length_px)/rightDistance;
+				E.floor_nodes[i].setForce(0,-(x1/2*(E.car_weight/E.car_length_px)+(rightDistance-x2/2)*(E.car_weight*x2/E.car_length_px)/rightDistance),Grid.canvas);
 			}
 			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && !E.floor_nodes[i+1].isCarOn()){ //if the car is only on the current node
 				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
 				x1=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2); //the portion of the car on the left member (the position of the current node minus the position of the tail of the car)
 				x2=(E.car.left+E.car_length_px/2)-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the front of the car minus the position of the current node)
-				E.floor_nodes[i].external_force[1]=((leftDistance-x1/2)*x1/leftDistance+(rightDistance-x2/2)*x2/rightDistance)*E.car_weight/E.car_length_px;
+				E.floor_nodes[i].setForce(0,-(((leftDistance-x1/2)*x1/leftDistance+(rightDistance-x2/2)*x2/rightDistance)*E.car_weight/E.car_length_px),Grid.canvas);
 			}
 			else if(!E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on the current and right node
 				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
 				x1=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2); //the portion of the car on the left member (the position of the current node minus the position of the tail of the car)
 				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //the portion of the car on the right member (the position of the right node minus the position of the left node)
-				E.floor_nodes[i].external_force[1]=(leftDistance-x1/2)*E.car_weight*x1/(E.car_length_px*leftDistance)+(x2/2*E.car_weight)/E.car_length_px;
+				E.floor_nodes[i].setForce(0,-((leftDistance-x1/2)*E.car_weight*x1/(E.car_length_px*leftDistance)+(x2/2*E.car_weight)/E.car_length_px),Grid.canvas);
 			}
 			else if(!E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is only on the right node
 				x=E.floor_nodes[i+1].left-(E.car.left-E.car_length_px/2); //portion of car on right member (position of right node minus position of tail of car)
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
-				E.floor_nodes[i].external_force[1]=x*x*E.car_weight/(2*E.car_length_px*rightDistance);
+				E.floor_nodes[i].setForce(0,-(x*x*E.car_weight/(2*E.car_length_px*rightDistance)),Grid.canvas);
 			}
 			else if(E.floor_nodes[i-1].isCarOn() && E.floor_nodes[i].isCarOn() && E.floor_nodes[i+1].isCarOn()){ //if the car is on all three nodes
 				x1=E.floor_nodes[i].left-E.floor_nodes[i-1].left; //portion of car on left member (position of current node minus position of left member)
 				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of car on right member (position of right node minus position of current node)
-				E.floor_nodes[i].external_force[1]=(x1/2+x2/2)*E.car_weight/E.car_length_px;
+				E.floor_nodes[i].setForce(0,-((x1/2+x2/2)*E.car_weight/E.car_length_px),Grid.canvas);
 			}
 			else{
-				E.floor_nodes[i].external_force[1]=0;
+				E.floor_nodes[i].setForce(0,0,Grid.canvas);
 			}
 		}
 	}
@@ -115,7 +115,7 @@ module.exports=function (){
 	calculateWeightDistributionOfCar();
 };
 
-},{"./EntityController":3,"./Grid":4}],2:[function(require,module,exports){
+},{"./EntityController":3,"./Grid":5}],2:[function(require,module,exports){
 var Car = fabric.util.createClass(fabric.Rect, {
 
     type: 'car',
@@ -210,7 +210,50 @@ var EntityController={
 };
 
 module.exports=EntityController;
-},{"./Grid":4}],4:[function(require,module,exports){
+},{"./Grid":5}],4:[function(require,module,exports){
+var ForceLine = fabric.util.createClass(fabric.Line, {
+    type: 'forceline',
+
+    initialize: function(options) {
+        if (!options) {
+            options = {};
+        }
+
+        this.callSuper('initialize', options);
+
+        //settings default values of the most important properties
+        this.set({
+            fill: 'blue',
+            stroke: '#FF0096',
+            strokeWidth: 3,
+            strokeLineJoin : "round",
+            selectable: false,
+            hasControls: false,
+            hasBorders: false,
+            label: options.label || '',
+            x1: options.x1 || -100,
+            y1: options.y1 || -100,
+            x2: options.x2 || -100,
+            y2: options.y2 || -100,
+        });
+    },
+
+    toObject: function() {
+        return fabric.util.object.extend(this.callSuper('toObject'), {
+            label: this.get('label')
+        });
+    },
+
+    _render: function(ctx) {
+        this.callSuper('_render', ctx);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#FF0096'; //color of the font
+        ctx.fillText(this.label, -this.width / 4+10, -this.height / 2+30);
+    }
+});
+
+module.exports=ForceLine;
+},{}],5:[function(require,module,exports){
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -269,7 +312,7 @@ $('#grid-size-input').change(function() {
 });
 
 module.exports = Grid;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var Node=require('./Node');
 var Member=require('./Member');
 var Car=require('./Car');
@@ -402,7 +445,7 @@ module.exports = function(canvas, ModeController) {
       return false;
     });
 };
-},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":4,"./Member":6,"./Node":8}],6:[function(require,module,exports){
+},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":7,"./Node":9}],7:[function(require,module,exports){
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -446,7 +489,7 @@ var Member = fabric.util.createClass(fabric.Line, {
 });
 
 module.exports=Member;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
@@ -509,8 +552,9 @@ $('#add-node-button').on('click',function(){
 
 module.exports=ModeController;
 
-},{"./Member":6,"./Node":8}],8:[function(require,module,exports){
+},{"./Member":7,"./Node":9}],9:[function(require,module,exports){
 var E=require('./EntityController');
+var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
@@ -539,6 +583,8 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
+
+    
 
     toObject: function() {
         return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -574,6 +620,33 @@ Node.prototype.moveMembers = function(canvas) {
     }
 };
 
+Node.prototype.setForce=function(x,y,canvas){
+
+    this.external_force[0]=x || 0;
+    this.external_force[1]=y || 0;
+    roundedX=Math.round(x*100)/100;
+    roundedY=Math.round(y*100)/100;
+    if(this.forceLine){ //if a force line already exists
+        this.forceLine.set({
+            x1: this.left,
+            y1: this.top,
+            label: roundedY,
+            x2: this.left,
+            y2: this.top-y*200/E.car_weight
+        });
+    }
+    else{ //if the forceline doesnt yet exist
+        this.forceLine=new ForceLine({
+            x1: this.left,
+            y1: this.top,
+            label: roundedY,
+            x2: this.left,
+            y2: this.top-y*200/E.car_weight
+        });
+        canvas.add(this.forceLine);
+    }
+};
+
 Node.prototype.isCarOn=function(){
     if(E.car){
         if(this.left>=E.car.left-E.car_length_px/2 && this.left<=E.car.left+E.car_length_px/2){
@@ -584,7 +657,7 @@ Node.prototype.isCarOn=function(){
 };
 
 module.exports=Node;
-},{"./EntityController":3}],9:[function(require,module,exports){
+},{"./EntityController":3,"./ForceLine":4}],10:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -611,7 +684,7 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
@@ -678,4 +751,4 @@ module.exports=ResizeController;
 
 
 
-},{"./EntityController":3,"./Grid":4,"./InteractionController":5,"./ModeController":7,"./Node":8,"./ResizeController":9}]},{},[10]);
+},{"./EntityController":3,"./Grid":5,"./InteractionController":6,"./ModeController":8,"./Node":9,"./ResizeController":10}]},{},[11]);

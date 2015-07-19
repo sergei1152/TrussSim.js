@@ -1,4 +1,5 @@
 var E=require('./EntityController');
+var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
@@ -27,6 +28,8 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
+
+    
 
     toObject: function() {
         return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -59,6 +62,33 @@ Node.prototype.moveMembers = function(canvas) {
         canvas.remove(this.connected_members[i]);
         canvas.add(this.connected_members[i]);
         canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
+    }
+};
+
+Node.prototype.setForce=function(x,y,canvas){
+
+    this.external_force[0]=x || 0;
+    this.external_force[1]=y || 0;
+    roundedX=Math.round(x*100)/100;
+    roundedY=Math.round(y*100)/100;
+    if(this.forceLine){ //if a force line already exists
+        this.forceLine.set({
+            x1: this.left,
+            y1: this.top,
+            label: roundedY,
+            x2: this.left,
+            y2: this.top-y*200/E.car_weight
+        });
+    }
+    else{ //if the forceline doesnt yet exist
+        this.forceLine=new ForceLine({
+            x1: this.left,
+            y1: this.top,
+            label: roundedY,
+            x2: this.left,
+            y2: this.top-y*200/E.car_weight
+        });
+        canvas.add(this.forceLine);
     }
 };
 
