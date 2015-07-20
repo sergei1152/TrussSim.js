@@ -22,6 +22,8 @@ var Member = fabric.util.createClass(fabric.Line, {
             x2: options.x2 || -100,
             y2: options.y2 || -100,
             force: null,
+            length: null,
+            unit_vector: null,
             start_node: null, //what node the member is connected to at it's start
             end_node: null //what node the member is connected to at it's end
         });
@@ -39,5 +41,13 @@ var Member = fabric.util.createClass(fabric.Line, {
         this.callSuper('_render', ctx);
     }
 });
+
+Member.prototype.calcLength(){
+    this.length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
+};
+Member.prototype.calcUnitVector(){
+    this.unit_vector[0]=(this.x2-this.x1)/this.length;
+    this.unit_vector[1]=(this.y2-this.y1)/this.length;
+}
 
 module.exports=Member;

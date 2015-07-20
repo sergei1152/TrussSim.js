@@ -31,7 +31,7 @@ function calculateSupportReactions(){
 	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
-function calculateWeightDistributionOfCar(){
+function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched
 	var x, x1, x2, leftDistance, rightDistance;
 	for (var i=0;i<E.floor_nodes.length;i++){
 		if(!E.floor_nodes[i-1]){ //if left support node
@@ -106,10 +106,14 @@ function calculateWeightDistributionOfCar(){
 			}
 		}
 	}
+}
 
+function methodOfJoints(){
+	
 }
 
 module.exports=function (){
 	calculateSupportReactions();
 	calculateWeightDistributionOfCar();
+	methodOfJoints();
 };
