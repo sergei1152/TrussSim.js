@@ -21,9 +21,10 @@ var Member = fabric.util.createClass(fabric.Line, {
             y1: options.y1 || -100,
             x2: options.x2 || -100,
             y2: options.y2 || -100,
-            force: null,
-            length: null,
-            unit_vector: null,
+            label: options.label || '',
+            force:null,
+            member_length: null,
+            unit_vector: [],
             start_node: null, //what node the member is connected to at it's start
             end_node: null //what node the member is connected to at it's end
         });
@@ -33,21 +34,32 @@ var Member = fabric.util.createClass(fabric.Line, {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             force: this.get('force'),
             start_node: this.get('start_node'),
-            end_node: this.get('end_node')
+            end_node: this.get('end_node'),
+            label: this.get('label')
         });
     },
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#FF0096'; //color of the font
+        ctx.fillText(this.label, -this.width / 4+10, -this.height / 2+30);
     }
 });
 
-Member.prototype.calcLength(){
-    this.length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
+Member.prototype.calcLength=function(){
+    this.member_length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
 };
-Member.prototype.calcUnitVector(){
-    this.unit_vector[0]=(this.x2-this.x1)/this.length;
-    this.unit_vector[1]=(this.y2-this.y1)/this.length;
-}
+
+Member.prototype.calcUnitVector=function(){
+    this.unit_vector[0]=(this.x2-this.x1)/this.member_length;
+    this.unit_vector[1]=(this.y2-this.y1)/this.member_length;
+};
+
+Member.prototype.setForce=function(x){
+    this.force=x;
+    this.label=Math.round(x*100)/100;
+
+};
 
 module.exports=Member;

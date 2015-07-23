@@ -20,6 +20,7 @@ function calculateSupportReactions(){
 		actual_weight=E.car_weight;
 		distance_a_centroid_px=E.car.left-E.supportA.left;
 	}
+	//if the car is leaving the bridge
 	else if(E.supportB.left-E.car.left<E.car_length_px/2 && E.supportB.left-E.car.left>-E.car_length_px/2){
 		var remaining_car_length_px=E.car_length_px-(E.car.left+E.car_length_px/2-E.supportB.left); //how much of the car length is remaining within the bridge
 		actual_weight=(E.car_weight/E.car_length_px)*remaining_car_length_px;
@@ -109,8 +110,77 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 }
 
 function methodOfJoints(){
+	var force_matrix=[];
+	var solution=[];
+	for(var i=0;i<E.nodes.length;i++){
+		var rowX=[];
+		var rowY=[];
+		solution.push(-E.nodes[i].external_force[0]);
+		solution.push(-E.nodes[i].external_force[1]);
+		for(var j=0;j<E.members.length;j++){
+			E.members[j].calcLength();
+			E.members[j].calcUnitVector();
+			var connected=false;
+			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
+				if(E.members[j]===E.nodes[i].connected_members[k]){
+					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
+						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					else{ //flip the direction so all forces are tensile
+						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					connected=true;
+				}
+
+			}
+			if(!connected){
+				rowX.push(0);
+				rowY.push(0);
+			}
+		}
+		force_matrix.push(rowX);
+		force_matrix.push(rowY);
+
+	}
+
+	force_matrix.pop();
+		force_matrix.pop();
+
+	force_matrix.pop();
+	solution.pop();
+	solution.pop();
+	solution.pop();
+	var forces=numeric.solve(force_matrix, solution, false);
+
+	for(i=0;i<E.members.length;i++){
+		E.members[i].setForce(forces[i]);
+	}
+
+	// var force_inverse=(1.0/numeric.det)force_matrix);
+
+	// console.log(numeric.prettyPrint(force_inverse));
+	// console.log(numeric.prettyPrint(solution));
+	// force_matrix=math.matrix(force_matrix);
+
+
+	// console.log('Members:'+ E.members.length);
+	// console.log('Solutions:'+solution.length);
+	// console.log('Forces: '+forces.length);
+	// var inverse=numeric.inv(force_matrix
+	// console.log(numeric.prettyPrint(force_matrix));
+
+	// console.log(numeric.prettyPrint(numeric.solve(force_matrix, solution, false)));
+	// console.log(numeric.prettyPrint(solution));
+
+	// var forces=numeric.ccsLUPSolve(force_matrix, solution);
+	// console.log('forces:');
+	// console.log(numeric.prettyPrint(forces));
+	// console.log(forces.length);
 	
 }
+
 
 module.exports=function (){
 	calculateSupportReactions();

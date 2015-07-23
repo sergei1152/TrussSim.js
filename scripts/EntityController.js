@@ -12,8 +12,6 @@ var EntityController={
 	nodes: [],
 	members:[],
 	floor_nodes: [],
-	num_nodes:2,
-	num_members:0,
 	addNode:function(node){
 		this.num_nodes+=1;
 		this.nodes.push(node);
@@ -41,7 +39,7 @@ var EntityController={
 		}
 	},
 	isValid: function(){
-		if(this.num_members===2*this.num_nodes-3){
+		if(this.members.length===2*this.nodes.length-3){
 			return true;
 		}
 		return false;

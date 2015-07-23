@@ -21,6 +21,7 @@ function calculateSupportReactions(){
 		actual_weight=E.car_weight;
 		distance_a_centroid_px=E.car.left-E.supportA.left;
 	}
+	//if the car is leaving the bridge
 	else if(E.supportB.left-E.car.left<E.car_length_px/2 && E.supportB.left-E.car.left>-E.car_length_px/2){
 		var remaining_car_length_px=E.car_length_px-(E.car.left+E.car_length_px/2-E.supportB.left); //how much of the car length is remaining within the bridge
 		actual_weight=(E.car_weight/E.car_length_px)*remaining_car_length_px;
@@ -110,8 +111,77 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 }
 
 function methodOfJoints(){
+	var force_matrix=[];
+	var solution=[];
+	for(var i=0;i<E.nodes.length;i++){
+		var rowX=[];
+		var rowY=[];
+		solution.push(-E.nodes[i].external_force[0]);
+		solution.push(-E.nodes[i].external_force[1]);
+		for(var j=0;j<E.members.length;j++){
+			E.members[j].calcLength();
+			E.members[j].calcUnitVector();
+			var connected=false;
+			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
+				if(E.members[j]===E.nodes[i].connected_members[k]){
+					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
+						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					else{ //flip the direction so all forces are tensile
+						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					connected=true;
+				}
+
+			}
+			if(!connected){
+				rowX.push(0);
+				rowY.push(0);
+			}
+		}
+		force_matrix.push(rowX);
+		force_matrix.push(rowY);
+
+	}
+
+	force_matrix.pop();
+		force_matrix.pop();
+
+	force_matrix.pop();
+	solution.pop();
+	solution.pop();
+	solution.pop();
+	var forces=numeric.solve(force_matrix, solution, false);
+
+	for(i=0;i<E.members.length;i++){
+		E.members[i].setForce(forces[i]);
+	}
+
+	// var force_inverse=(1.0/numeric.det)force_matrix);
+
+	// console.log(numeric.prettyPrint(force_inverse));
+	// console.log(numeric.prettyPrint(solution));
+	// force_matrix=math.matrix(force_matrix);
+
+
+	// console.log('Members:'+ E.members.length);
+	// console.log('Solutions:'+solution.length);
+	// console.log('Forces: '+forces.length);
+	// var inverse=numeric.inv(force_matrix
+	// console.log(numeric.prettyPrint(force_matrix));
+
+	// console.log(numeric.prettyPrint(numeric.solve(force_matrix, solution, false)));
+	// console.log(numeric.prettyPrint(solution));
+
+	// var forces=numeric.ccsLUPSolve(force_matrix, solution);
+	// console.log('forces:');
+	// console.log(numeric.prettyPrint(forces));
+	// console.log(forces.length);
 	
 }
+
 
 module.exports=function (){
 	calculateSupportReactions();
@@ -174,8 +244,6 @@ var EntityController={
 	nodes: [],
 	members:[],
 	floor_nodes: [],
-	num_nodes:2,
-	num_members:0,
 	addNode:function(node){
 		this.num_nodes+=1;
 		this.nodes.push(node);
@@ -203,7 +271,7 @@ var EntityController={
 		}
 	},
 	isValid: function(){
-		if(this.num_members===2*this.num_nodes-3){
+		if(this.members.length===2*this.nodes.length-3){
 			return true;
 		}
 		return false;
@@ -355,7 +423,6 @@ module.exports = function(canvas, ModeController) {
             EntityController.addNode(ModeController.new_node); 
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
             canvas.add(ModeController.new_node); //adding the new node to the canvas
-            console.log(EntityController);
         }
 
         else if (ModeController.mode === 'add_member') {
@@ -385,7 +452,6 @@ module.exports = function(canvas, ModeController) {
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
                     canvas.add(ModeController.new_member);
-                    console.log(EntityController);
                 }
             }
         }
@@ -429,8 +495,9 @@ module.exports = function(canvas, ModeController) {
     });
 
     $('#simulation-button').on('click', function(){
-      if(EntityController.isValid()){ //if the bridge design is not valid
-        alert('The bridge design is not valid and does not satisfy the M=2N-3 condition');
+      if(!EntityController.isValid()){ //if the bridge design is not valid
+        alert('The bridge design is not valid and does not satisfy the M=2N-3 conditionn'+
+            'You have '+EntityController.nodes.length+' nodes and '+EntityController.members.length+' members');
       }
       else if(!EntityController.car){
         var car = new Car({
@@ -473,7 +540,10 @@ var Member = fabric.util.createClass(fabric.Line, {
             y1: options.y1 || -100,
             x2: options.x2 || -100,
             y2: options.y2 || -100,
-            force: null,
+            label: options.label || '',
+            force:null,
+            member_length: null,
+            unit_vector: [],
             start_node: null, //what node the member is connected to at it's start
             end_node: null //what node the member is connected to at it's end
         });
@@ -483,14 +553,33 @@ var Member = fabric.util.createClass(fabric.Line, {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             force: this.get('force'),
             start_node: this.get('start_node'),
-            end_node: this.get('end_node')
+            end_node: this.get('end_node'),
+            label: this.get('label')
         });
     },
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#FF0096'; //color of the font
+        ctx.fillText(this.label, -this.width / 4+10, -this.height / 2+30);
     }
 });
+
+Member.prototype.calcLength=function(){
+    this.member_length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
+};
+
+Member.prototype.calcUnitVector=function(){
+    this.unit_vector[0]=(this.x2-this.x1)/this.member_length;
+    this.unit_vector[1]=(this.y2-this.y1)/this.member_length;
+};
+
+Member.prototype.setForce=function(x){
+    this.force=x;
+    this.label=Math.round(x*100)/100;
+
+};
 
 module.exports=Member;
 },{}],8:[function(require,module,exports){

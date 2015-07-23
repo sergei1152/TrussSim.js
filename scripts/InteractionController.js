@@ -36,7 +36,6 @@ module.exports = function(canvas, ModeController) {
             EntityController.addNode(ModeController.new_node); 
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
             canvas.add(ModeController.new_node); //adding the new node to the canvas
-            console.log(EntityController);
         }
 
         else if (ModeController.mode === 'add_member') {
@@ -66,7 +65,6 @@ module.exports = function(canvas, ModeController) {
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
                     canvas.add(ModeController.new_member);
-                    console.log(EntityController);
                 }
             }
         }
@@ -110,8 +108,9 @@ module.exports = function(canvas, ModeController) {
     });
 
     $('#simulation-button').on('click', function(){
-      if(EntityController.isValid()){ //if the bridge design is not valid
-        alert('The bridge design is not valid and does not satisfy the M=2N-3 condition');
+      if(!EntityController.isValid()){ //if the bridge design is not valid
+        alert('The bridge design is not valid and does not satisfy the M=2N-3 conditionn'+
+            'You have '+EntityController.nodes.length+' nodes and '+EntityController.members.length+' members');
       }
       else if(!EntityController.car){
         var car = new Car({
