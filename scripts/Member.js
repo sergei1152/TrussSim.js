@@ -1,3 +1,5 @@
+var E=require('./EntityController');
+
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -43,7 +45,7 @@ var Member = fabric.util.createClass(fabric.Line, {
         this.callSuper('_render', ctx);
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FF0096'; //color of the font
-        ctx.fillText(this.label, -this.width / 4+10, -this.height / 2+30);
+        ctx.fillText(this.label, -this.width /4, -this.height / 2);
     }
 });
 
@@ -58,8 +60,29 @@ Member.prototype.calcUnitVector=function(){
 
 Member.prototype.setForce=function(x){
     this.force=x;
+    var percentMax;
+    if(x<0){ //if the force is compressive
+        percentMax=-x*100/E.max_compressive;
+        if(percentMax>100){
+            this.stroke='hsla(360, 0%,0%, 1)';
+        }
+        else{
+            this.stroke='hsla(360, '+percentMax+'%,50%, 1)';
+        }
+    }
+    else if(x>0){
+        percentMax=x*100/E.max_tensile;
+        if(percentMax>100){
+            this.stroke='hsla(243, 0%,0%, 1)';
+        }
+        else{
+            this.stroke='hsla(243, '+percentMax+'%,50%, 1)';
+        }
+    }
+    else{
+        this.stroke='hsla(243, 0%,50%, 1)';
+    }
     this.label=Math.round(x*100)/100;
-
 };
 
 module.exports=Member;

@@ -46,7 +46,7 @@
   canvas.add(supportB);
 
   //adding  evenly distributed floor beam nodes
-  var num_floor_beams=4;
+  var num_floor_beams=1;
   for (var i=0;i<num_floor_beams;i++){
     var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
     var new_floor_node=new Node({

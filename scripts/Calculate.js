@@ -149,41 +149,35 @@ function methodOfJoints(){
 		force_matrix.pop();
 
 	force_matrix.pop();
+			// force_matrix.pop();
+
 	solution.pop();
 	solution.pop();
 	solution.pop();
+		// solution.pop();
+
 	var forces=numeric.solve(force_matrix, solution, false);
 
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
 	}
-
-	// var force_inverse=(1.0/numeric.det)force_matrix);
-
-	// console.log(numeric.prettyPrint(force_inverse));
-	// console.log(numeric.prettyPrint(solution));
-	// force_matrix=math.matrix(force_matrix);
-
-
-	// console.log('Members:'+ E.members.length);
-	// console.log('Solutions:'+solution.length);
-	// console.log('Forces: '+forces.length);
-	// var inverse=numeric.inv(force_matrix
-	// console.log(numeric.prettyPrint(force_matrix));
-
-	// console.log(numeric.prettyPrint(numeric.solve(force_matrix, solution, false)));
-	// console.log(numeric.prettyPrint(solution));
-
-	// var forces=numeric.ccsLUPSolve(force_matrix, solution);
-	// console.log('forces:');
-	// console.log(numeric.prettyPrint(forces));
-	// console.log(forces.length);
-	
 }
 
+function calculateCost(){
+	var bridge_cost=0;
+	for(var i=0;i<E.members.length;i++){
+		var meter_length=E.members[i].member_length*Grid.grid_meter/Grid.grid_size;
+		bridge_cost+=meter_length*E.member_cost_meter;
+	}
+
+	bridge_cost+=E.nodes.length*E.node_cost;
+
+	return Math.round(bridge_cost*100)/100;
+}
 
 module.exports=function (){
 	calculateSupportReactions();
 	calculateWeightDistributionOfCar();
 	methodOfJoints();
+	$('#bridge_cost').text(calculateCost());
 };

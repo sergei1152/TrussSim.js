@@ -150,43 +150,37 @@ function methodOfJoints(){
 		force_matrix.pop();
 
 	force_matrix.pop();
+			// force_matrix.pop();
+
 	solution.pop();
 	solution.pop();
 	solution.pop();
+		// solution.pop();
+
 	var forces=numeric.solve(force_matrix, solution, false);
 
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
 	}
-
-	// var force_inverse=(1.0/numeric.det)force_matrix);
-
-	// console.log(numeric.prettyPrint(force_inverse));
-	// console.log(numeric.prettyPrint(solution));
-	// force_matrix=math.matrix(force_matrix);
-
-
-	// console.log('Members:'+ E.members.length);
-	// console.log('Solutions:'+solution.length);
-	// console.log('Forces: '+forces.length);
-	// var inverse=numeric.inv(force_matrix
-	// console.log(numeric.prettyPrint(force_matrix));
-
-	// console.log(numeric.prettyPrint(numeric.solve(force_matrix, solution, false)));
-	// console.log(numeric.prettyPrint(solution));
-
-	// var forces=numeric.ccsLUPSolve(force_matrix, solution);
-	// console.log('forces:');
-	// console.log(numeric.prettyPrint(forces));
-	// console.log(forces.length);
-	
 }
 
+function calculateCost(){
+	var bridge_cost=0;
+	for(var i=0;i<E.members.length;i++){
+		var meter_length=E.members[i].member_length*Grid.grid_meter/Grid.grid_size;
+		bridge_cost+=meter_length*E.member_cost_meter;
+	}
+
+	bridge_cost+=E.nodes.length*E.node_cost;
+
+	return Math.round(bridge_cost*100)/100;
+}
 
 module.exports=function (){
 	calculateSupportReactions();
 	calculateWeightDistributionOfCar();
 	methodOfJoints();
+	$('#bridge_cost').text(calculateCost());
 };
 
 },{"./EntityController":3,"./Grid":5}],2:[function(require,module,exports){
@@ -230,58 +224,66 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
 module.exports = Car;
 },{}],3:[function(require,module,exports){
-var Grid=require('./Grid');
+var Grid = require('./Grid');
 
 //Keeps track of all the nodes and members in the bridge design
-var EntityController={
-	car: null,
-	car_length: 6,
-	car_length_px: null,
-	car_weight: 7.5,
-	supportA: null,
-	supportB: null,
-	bridge_length: 15,
-	nodes: [],
-	members:[],
-	floor_nodes: [],
-	addNode:function(node){
-		this.num_nodes+=1;
-		this.nodes.push(node);
-	},
-	addMember:function(member){
-		this.num_members+=1;
-		this.members.push(member);
-	},
-	removeNode:function(node){
-		this.num_nodes-=1;
-		for (var i=0; i< this.nodes.length; i++){
-			if (this.nodes[i]===node){
-				this.nodes.splice(i,1);
-				break;
-			}
-		}
-	},
-	removeMember:function(member){
-		this.num_members-=1;
-		for (var i=0; i< this.members.length; i++){
-			if (this.members[i]===member){
-				this.members.splice(i,1);
-				break;
-			}
-		}
-	},
-	isValid: function(){
-		if(this.members.length===2*this.nodes.length-3){
-			return true;
-		}
-		return false;
-	},
-	calcCarLengthPx: function(){
-		this.car_length_px=this.car_length*Grid.grid_size*Grid.grid_meter;
-	}
+var EntityController = {
+	//configurable variables
+    car_length: 6, //the length of the car in m
+    bridge_length: 15, //the length of the bridge in m
+    car_weight: 7.5, //entire weight of the car in kN
+    member_cost_meter: 10, //cost of members per meter
+    node_cost: 5, //cost of each node
+    max_compressive:8,
+    max_tensile: 12,
+
+    //dev stuff for calculations
+    car: null,
+    car_length_px: null,
+    supportA: null,
+    supportB: null,
+    nodes: [],
+    members: [],
+    floor_nodes: [],
+
+    addNode: function(node) {
+        this.num_nodes += 1;
+        this.nodes.push(node);
+    },
+    addMember: function(member) {
+        this.num_members += 1;
+        this.members.push(member);
+    },
+    removeNode: function(node) {
+        this.num_nodes -= 1;
+        for (var i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i] === node) {
+                this.nodes.splice(i, 1);
+                break;
+            }
+        }
+    },
+    removeMember: function(member) {
+        this.num_members -= 1;
+        for (var i = 0; i < this.members.length; i++) {
+            if (this.members[i] === member) {
+                this.members.splice(i, 1);
+                break;
+            }
+        }
+    },
+    isValid: function() {
+        if (this.members.length === 2 * this.nodes.length - 3) {
+            return true;
+        }
+        return false;
+    },
+    calcCarLengthPx: function() {
+        this.car_length_px = this.car_length * Grid.grid_size * Grid.grid_meter;
+    }
 };
 
-module.exports=EntityController;
+module.exports = EntityController;
 },{"./Grid":5}],4:[function(require,module,exports){
 var ForceLine = fabric.util.createClass(fabric.Line, {
     type: 'forceline',
@@ -517,6 +519,8 @@ module.exports = function(canvas, ModeController) {
     });
 };
 },{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":7,"./Node":9}],7:[function(require,module,exports){
+var E=require('./EntityController');
+
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -562,7 +566,7 @@ var Member = fabric.util.createClass(fabric.Line, {
         this.callSuper('_render', ctx);
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FF0096'; //color of the font
-        ctx.fillText(this.label, -this.width / 4+10, -this.height / 2+30);
+        ctx.fillText(this.label, -this.width /4, -this.height / 2);
     }
 });
 
@@ -577,12 +581,33 @@ Member.prototype.calcUnitVector=function(){
 
 Member.prototype.setForce=function(x){
     this.force=x;
+    var percentMax;
+    if(x<0){ //if the force is compressive
+        percentMax=-x*100/E.max_compressive;
+        if(percentMax>100){
+            this.stroke='hsla(360, 0%,0%, 1)';
+        }
+        else{
+            this.stroke='hsla(360, '+percentMax+'%,50%, 1)';
+        }
+    }
+    else if(x>0){
+        percentMax=x*100/E.max_tensile;
+        if(percentMax>100){
+            this.stroke='hsla(243, 0%,0%, 1)';
+        }
+        else{
+            this.stroke='hsla(243, '+percentMax+'%,50%, 1)';
+        }
+    }
+    else{
+        this.stroke='hsla(243, 0%,50%, 1)';
+    }
     this.label=Math.round(x*100)/100;
-
 };
 
 module.exports=Member;
-},{}],8:[function(require,module,exports){
+},{"./EntityController":3}],8:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
@@ -826,7 +851,7 @@ module.exports=ResizeController;
   canvas.add(supportB);
 
   //adding  evenly distributed floor beam nodes
-  var num_floor_beams=4;
+  var num_floor_beams=1;
   for (var i=0;i<num_floor_beams;i++){
     var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
     var new_floor_node=new Node({
