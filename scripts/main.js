@@ -3,9 +3,10 @@
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
   var EntityController=require('./EntityController');
+  var InputController=require('./InputController');
   var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
-      selection: true
+      selection: false
   });
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
@@ -18,6 +19,7 @@
 
 
   InteractionController(canvas, ModeController);
+  InputController();
 
   //Adding inital support nodes
   var supportA=new Node({

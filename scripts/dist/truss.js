@@ -203,6 +203,7 @@ var Car = fabric.util.createClass(fabric.Rect, {
             lockScalingX: true,
             lockScalingY: true,
             hasControls: false,
+            hasBorders: false,
             fill: "hsla(123, 51%, 64%, 0.65)"
         }); 
     },
@@ -375,18 +376,71 @@ var Grid = {
     }
 };
 
-//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
-$('#grid-size-input').change(function() {
-    var new_grid_size = parseInt($('#grid-size-input').val());
-
-    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
-        Grid.grid_size = new_grid_size;
-        Grid.createGrid();
-    }
-});
-
 module.exports = Grid;
 },{}],6:[function(require,module,exports){
+var EntityController=require('./EntityController');
+var Grid=require('./Grid');
+
+var InputController=function(){
+
+	$('#bridge-length-input').change(function() {
+	    var new_bridge_length = parseInt($(this).val());
+
+	    if (!isNaN(new_bridge_length)) {
+	       EntityController.bridge_length=new_bridge_length;
+	    }
+	});
+
+	$('#car-weight-input').change(function() {
+	    var new_car_weight = parseInt($(this).val());
+	    if (!isNaN(new_car_weight)) {
+	       EntityController.car_weight=new_car_weight;
+	    }
+	});
+
+
+	$('#car-length-input').change(function() {
+	    var new_car_length = parseInt($(this).val());
+	    if (!isNaN(new_car_length)) {
+	       EntityController.car_length=new_car_length;
+	    }
+	});
+
+	$('#max-compressive-input').change(function() {
+	    var max = parseInt($(this).val());
+	    if (!isNaN(max)) {
+	       EntityController.max_compressive=max;
+	    }
+	});
+
+	$('#max-tensile-input').change(function() {
+	    var max = parseInt($(this).val());
+	    if (!isNaN(max)) {
+	       EntityController.max_tensile=max;
+	    }
+	});
+
+	$('#num-floor-input').change(function() {
+	    var num_floor_nodes = parseInt($(this).val());
+	    if (!isNaN(num_floor_nodes)) {
+	       
+	    }
+	});
+
+	//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
+	$('#grid-size-input').change(function() {
+	    var new_grid_size = parseInt($('#grid-size-input').val());
+
+	    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
+	        Grid.grid_size = new_grid_size;
+	        Grid.createGrid();
+	    }
+	});
+
+};
+
+module.exports=InputController;
+},{"./EntityController":3,"./Grid":5}],7:[function(require,module,exports){
 var Node = require('./Node');
 var Member = require('./Member');
 var Car = require('./Car');
@@ -522,7 +576,7 @@ module.exports = function(canvas, ModeController) {
         return false;
     });
 };
-},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":7,"./Node":9}],7:[function(require,module,exports){
+},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":8,"./Node":10}],8:[function(require,module,exports){
 var E=require('./EntityController');
 
 var Member = fabric.util.createClass(fabric.Line, {
@@ -611,7 +665,7 @@ Member.prototype.setForce=function(x){
 };
 
 module.exports=Member;
-},{"./EntityController":3}],8:[function(require,module,exports){
+},{"./EntityController":3}],9:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
@@ -675,7 +729,7 @@ $('#add-node-button').on('click',function(){
 
 module.exports=ModeController;
 
-},{"./Member":7,"./Node":9}],9:[function(require,module,exports){
+},{"./Member":8,"./Node":10}],10:[function(require,module,exports){
 var E=require('./EntityController');
 var ForceLine=require('./ForceLine');
 
@@ -780,7 +834,7 @@ Node.prototype.isCarOn=function(){
 };
 
 module.exports=Node;
-},{"./EntityController":3,"./ForceLine":4}],10:[function(require,module,exports){
+},{"./EntityController":3,"./ForceLine":4}],11:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -807,15 +861,16 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
   var EntityController=require('./EntityController');
+  var InputController=require('./InputController');
   var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
-      selection: true
+      selection: false
   });
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
@@ -828,6 +883,7 @@ module.exports=ResizeController;
 
 
   InteractionController(canvas, ModeController);
+  InputController();
 
   //Adding inital support nodes
   var supportA=new Node({
@@ -874,4 +930,4 @@ module.exports=ResizeController;
 
 
 
-},{"./EntityController":3,"./Grid":5,"./InteractionController":6,"./ModeController":8,"./Node":9,"./ResizeController":10}]},{},[11]);
+},{"./EntityController":3,"./Grid":5,"./InputController":6,"./InteractionController":7,"./ModeController":9,"./Node":10,"./ResizeController":11}]},{},[12]);

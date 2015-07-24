@@ -45,14 +45,4 @@ var Grid = {
     }
 };
 
-//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
-$('#grid-size-input').change(function() {
-    var new_grid_size = parseInt($('#grid-size-input').val());
-
-    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
-        Grid.grid_size = new_grid_size;
-        Grid.createGrid();
-    }
-});
-
 module.exports = Grid;

@@ -17,6 +17,7 @@ var Car = fabric.util.createClass(fabric.Rect, {
             lockScalingX: true,
             lockScalingY: true,
             hasControls: false,
+            hasBorders: false,
             fill: "hsla(123, 51%, 64%, 0.65)"
         }); 
     },
