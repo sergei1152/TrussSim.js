@@ -7,7 +7,7 @@ var ResizeController={
 	//resizes canvas based on current and future window dimensions, as well as resizes the grid
 	resizeCanvas: function(){
 		if(ResizeController.canvas){
-			ResizeController.canvas.setHeight($(window).height()-120);
+			ResizeController.canvas.setHeight($(window).height()-230);
 	    	ResizeController.canvas.setWidth($(window).width()-2);
 	    	ResizeController.canvas.renderAll();
 		}

@@ -1,9 +1,9 @@
-var Node=require('./Node');
-var Member=require('./Member');
-var Car=require('./Car');
-var Grid=require('./Grid');
-var EntityController=require('./EntityController');
-var Calculate=require('./Calculate');
+var Node = require('./Node');
+var Member = require('./Member');
+var Car = require('./Car');
+var Grid = require('./Grid');
+var EntityController = require('./EntityController');
+var Calculate = require('./Calculate');
 
 module.exports = function(canvas, ModeController) {
 
@@ -13,7 +13,7 @@ module.exports = function(canvas, ModeController) {
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
-                'top': event.e.y - 105
+                'top': event.e.y -220
             });
             canvas.renderAll();
         }
@@ -21,7 +21,7 @@ module.exports = function(canvas, ModeController) {
         else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
-                'y2': event.e.y - 105
+                'y2': event.e.y - 220
             });
             canvas.renderAll();
         }
@@ -30,15 +30,13 @@ module.exports = function(canvas, ModeController) {
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
         if (ModeController.mode === 'add_node') {
-            canvas.remove(ModeController.new_node);//for some reason have to remove and re-add node to avoid weird glitcheness
+            canvas.remove(ModeController.new_node); //for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
             canvas.bringToFront(ModeController.new_node); //bringing the new node to the front of the canvas
-            EntityController.addNode(ModeController.new_node); 
+            EntityController.addNode(ModeController.new_node);
             ModeController.new_node = new Node(); //create a new node, while leaving the old one in the canvas
             canvas.add(ModeController.new_node); //adding the new node to the canvas
-        }
-
-        else if (ModeController.mode === 'add_member') {
+        } else if (ModeController.mode === 'add_member') {
             if (event.target && event.target.type === 'node') { //if a node has been clicked on
                 if (!ModeController.new_member.start_node) { //if the member's start has not been determined yet
                     ModeController.new_member.set({ //position the start of the member to be at the center of the node
@@ -48,16 +46,16 @@ module.exports = function(canvas, ModeController) {
                         y2: event.target.top
                     });
 
-                    ModeController.new_member.start_node=event.target;
+                    ModeController.new_member.start_node = event.target;
                     event.target.connected_members.push(ModeController.new_member);
                     canvas.renderAll();
-                } else if(ModeController.new_member.start_node && !ModeController.new_member.end_node && event.target!=ModeController.new_member.start_node){ //if the new member already has a starting node and the end has not been determined yet
+                } else if (ModeController.new_member.start_node && !ModeController.new_member.end_node && event.target != ModeController.new_member.start_node) { //if the new member already has a starting node and the end has not been determined yet
                     ModeController.new_member.set({ //place the end of the node at the center of the selected node
                         x2: event.target.left,
                         y2: event.target.top
                     });
-                    ModeController.new_member.end_node=event.target;
-                    event.target.connected_members.push(ModeController.new_member); 
+                    ModeController.new_member.end_node = event.target;
+                    event.target.connected_members.push(ModeController.new_member);
 
                     canvas.remove(ModeController.new_member); //re-add the member to avoid weird glitchiness
                     canvas.add(ModeController.new_member);
@@ -75,9 +73,9 @@ module.exports = function(canvas, ModeController) {
     canvas.on('object:selected', function(event) {
         if (ModeController.mode === 'erase') { //TODO: remove all connected members from the nodes as well
             canvas.remove(event.target); //remove the selected node from the canvas
-        } 
+        }
 
-        
+
     });
 
     var previous_fill = 'grey';
@@ -98,34 +96,40 @@ module.exports = function(canvas, ModeController) {
     });
 
     canvas.on('object:moving', function(event) {
-        if(event.target.type=='node'){ //if a node is moving
-            var node=event.target;
+        if (event.target.type == 'node') { //if a node is moving
+            var node = event.target;
             node.moveMembers(canvas);
-        }
-        else if(event.target.type=='car'){ 
+            if (ModeController.simulation) {
+                Calculate();
+            }
+        } else if (event.target.type == 'car') {
             Calculate();
         }
     });
 
-    $('#simulation-button').on('click', function(){
-      if(!EntityController.isValid()){ //if the bridge design is not valid
-        alert('The bridge design is not valid and does not satisfy the M=2N-3 conditionn'+
-            'You have '+EntityController.nodes.length+' nodes and '+EntityController.members.length+' members');
-      }
-      else if(!EntityController.car){
-        var car = new Car({
-          width: EntityController.car_length*Grid.grid_meter*Grid.grid_size,
-          height: Grid.grid_size,
-          left: 50,
-          top: canvas.getHeight()/2-40,
-          label: 'Truck',
-          length: EntityController.car_length,
-          weight: EntityController.car_weight
-      });
-      EntityController.car=car;
-      canvas.add(car);
-      }
-      Calculate();
-      return false;
+    $('#simulation-button').on('click', function() {
+        if (!EntityController.isValid()) { //if the bridge design is not valid
+            alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
+                'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
+        } else if (!EntityController.car) { //if the car object doesnt exist yet
+            var car = new Car({
+                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
+                height: Grid.grid_size,
+                left: 50,
+                top: canvas.getHeight() / 2 - 40,
+                label: 'Distributed Load',
+                length: EntityController.car_length,
+                weight: EntityController.car_weight
+            });
+            EntityController.car = car;
+            canvas.add(car);
+            Calculate();
+            ModeController.simulation=true;
+        } else { //if the car object already exists
+            Calculate();
+            ModeController.simulation=true;
+        }
+
+        return false;
     });
 };

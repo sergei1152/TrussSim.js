@@ -166,7 +166,7 @@ function methodOfJoints(){
 function calculateCost(){
 	var bridge_cost=0;
 	for(var i=0;i<E.members.length;i++){
-		var meter_length=E.members[i].member_length*Grid.grid_meter/Grid.grid_size;
+		var meter_length=E.members[i].member_length/(Grid.grid_size*Grid.grid_meter);
 		bridge_cost+=meter_length*E.member_cost_meter;
 	}
 

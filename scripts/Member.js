@@ -13,10 +13,10 @@ var Member = fabric.util.createClass(fabric.Line, {
         //settings default values of the most important properties
         this.set({
             fill: 'blue',
-            stroke: 'grey',
+            stroke: 'hsla(243, 0%,50%, 1)',
             strokeWidth: 10,
             strokeLineJoin : "round",
-            selectable: true, //settings this to false would disable the eraser from getting rid of it
+            selectable: false, //settings this to false would disable the eraser from getting rid of it
             hasControls: false,
             hasBorders: false,
             x1: options.x1 || -100,
@@ -44,8 +44,8 @@ var Member = fabric.util.createClass(fabric.Line, {
     _render: function(ctx) {
         this.callSuper('_render', ctx);
         ctx.font = '20px Arial';
-        ctx.fillStyle = '#FF0096'; //color of the font
-        ctx.fillText(this.label, -this.width /4, -this.height / 2);
+        ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+        ctx.fillText(this.label, 0,20);
     }
 });
 
@@ -63,16 +63,16 @@ Member.prototype.setForce=function(x){
     var percentMax;
     if(x<0){ //if the force is compressive
         percentMax=-x*100/E.max_compressive;
-        if(percentMax>100){
+        if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(360, 0%,0%, 1)';
         }
         else{
             this.stroke='hsla(360, '+percentMax+'%,50%, 1)';
         }
     }
-    else if(x>0){
+    else if(x>0){ //if the force is tensile
         percentMax=x*100/E.max_tensile;
-        if(percentMax>100){
+        if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(243, 0%,0%, 1)';
         }
         else{

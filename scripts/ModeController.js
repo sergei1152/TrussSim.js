@@ -7,6 +7,7 @@ var Member=require('./Member');
 var ModeController={
 	canvas: null,
 	mode: 'move',
+	simulation: false,
 	new_node:null,
 	new_member: null,
 

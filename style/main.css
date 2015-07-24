@@ -5,10 +5,17 @@ html, body{
 	padding:0;
 }
 
-#truss-canvas{
-	position:absolute;
-	border:1px solid black;
--webkit-box-shadow: 0px -2px 8px 0px rgba(0,0,0,0.13);
--moz-box-shadow: 0px -2px 8px 0px rgba(0,0,0,0.13);
-box-shadow: 0px -2px 8px 0px rgba(0,0,0,0.13);
+header{
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+}
+.form-group{
+	margin:12px;
+	
+}
+
+.menu-buttons{
+	margin:12px;
 }
