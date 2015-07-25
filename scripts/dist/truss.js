@@ -456,7 +456,7 @@ module.exports = function(canvas, ModeController) {
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
-                'top': event.e.y -220
+                'top': event.e.y
             });
             canvas.renderAll();
         }
@@ -464,7 +464,7 @@ module.exports = function(canvas, ModeController) {
         else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
-                'y2': event.e.y - 220
+                'y2': event.e.y
             });
             canvas.renderAll();
         }
@@ -746,19 +746,18 @@ var ModeController={
 
 };
 
-
-    $('#eraser-button').on('click',function () {
-    	ModeController.erase_mode();
-    });
-    $('#move-button').on('click',function () {
-    	ModeController.move_mode();
-    });
-    $('#add-member-button').on('click',function() {
-    	ModeController.add_member_mode();
-    });
-    $('#add-node-button').on('click',function() {
-    	ModeController.add_node_mode();
-    });
+$('#eraser-button').on('click',function () {
+	ModeController.erase_mode();
+});
+$('#move-button').on('click',function () {
+	ModeController.move_mode();
+});
+$('#add-member-button').on('click',function() {
+	ModeController.add_member_mode();
+});
+$('#add-node-button').on('click',function() {
+	ModeController.add_node_mode();
+});
 
 module.exports=ModeController;
 

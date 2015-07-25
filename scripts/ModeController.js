@@ -58,7 +58,7 @@ var ModeController={
 
 $('#eraser-button').on('click',function () {
 	ModeController.erase_mode();
-});a
+});
 $('#move-button').on('click',function () {
 	ModeController.move_mode();
 });
