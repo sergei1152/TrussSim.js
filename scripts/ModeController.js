@@ -3,7 +3,7 @@
 var Node=require('./Node');
 var Member=require('./Member');
 
-//Controlls the current mode
+//Controls the current mode
 var ModeController={
 	canvas: null,
 	mode: 'move',
@@ -24,39 +24,45 @@ var ModeController={
 			ModeController.canvas.remove(ModeController.new_member);
 			ModeController.new_member=null;
 		}
+	},
+	erase_mode:function(){
+		this.mode='erase';
+		this.clearNode();
+		this.clearMember();
+		alert("ok");
+	},
+	move_mode:function(){
+		this.mode='move';
+		this.clearNode();
+		this.clearMember();
+	},
+	add_member_mode:function(){
+		this.clearNode(); //gets rid of any existing unplaced nodes
+
+		if(this.mode!=='add_member'){ //if not already in add-member mode
+			this.mode='add_member';
+			this.new_member=new Member();
+			this.canvas.add(this.new_member); //adds the new member to the canvas
+		}
+	},
+	add_node_mode:function(){
+		this.clearMember(); //gets rid of any existing unplaced members
+
+		if(this.mode!=='add_node'){ //if not already in add node mode
+			this.mode='add_node';
+			this.new_node=new Node();
+			this.canvas.add(this.new_node); //adds the new node to the canvas
+		}
 	}
+
 };
 
-$('#eraser-button').on('click',function(){
-	ModeController.mode='erase';
-	ModeController.clearNode();
-	ModeController.clearMember();
-});
 
-$('#move-button').on('click',function(){
-	ModeController.mode='move';
-	ModeController.clearNode();
-	ModeController.clearMember();
-});
 
-$('#add-member-button').on('click',function(){
-	ModeController.clearNode(); //gets rid of any existing unplaced nodes
 
-	if(ModeController.mode!=='add_member'){ //if not already in add-member mode
-		ModeController.mode='add_member';
-		ModeController.new_member=new Member();
-		ModeController.canvas.add(ModeController.new_member); //adds the new member to the canvas
-	}
-});
-
-$('#add-node-button').on('click',function(){
-	ModeController.clearMember(); //gets rid of any existing unplaced members
-
-	if(ModeController.mode!=='add_node'){ //if not already in add node mode
-		ModeController.mode='add_node';
-		ModeController.new_node=new Node();
-		ModeController.canvas.add(ModeController.new_node); //adds the new node to the canvas
-	}
-});
+$('#eraser-button').on('click',ModeController.erase_mode);
+$('#move-button').on('click',ModeController.move_mode);
+$('#add-member-button').on('click',ModeController.add_member_mode);
+$('#add-node-button').on('click',ModeController.add_node_mode);
 
 module.exports=ModeController;

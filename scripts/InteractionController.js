@@ -107,6 +107,27 @@ module.exports = function(canvas, ModeController) {
         }
     });
 
+    //hotkeys are created here
+    var keyListener = document.getElementById('canvas-wrapper');
+    keyListener.tabIndex = 1000; //required to get the canvas wrapper register events with keys
+    $(keyListener).keydown(function(event) {
+        // console.log('key pressed was: '+event.which); // for debug
+        switch(event.which) {
+            case 27: //escape key
+                ModeController.move_mode();
+                break;
+            case 46: //delete key
+                ModeController.erase_mode();
+                break;
+            case 77: //'m' key
+                ModeController.add_member_mode();
+                break;
+            case 78: //'n' key
+                ModeController.add_node_mode();
+                break;
+        }
+    }); 
+
     $('#simulation-button').on('click', function() {
         if (!EntityController.isValid()) { //if the bridge design is not valid
             alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
