@@ -253,8 +253,6 @@ var EntityController = {
         //reset everything
         this.clearAllNodes();
 
-        console.log(jsonObj);
-
         //create initial nodes
         for (var i in jsonObj.nodes) {
             node = new Node();
@@ -262,23 +260,21 @@ var EntityController = {
             this.addNode(node);
             //draw everyone as they come
             Grid.canvas.add(node);
-
-            if(node.support)
-                if (i === 0) {
+            if(node.support) { 
+                if (i < 1) {
                     this.supportA = node;
                     this.floor_nodes.push(node);
                 } else {
                     this.supportB = node;
                     //push later in to floor_nodes;
                 }
-            if(node.floor_beam) {
+            }
+            if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
+                // console.log('floorBeam');
             }
             //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
             if ((+i+1) < jsonObj.num_nodes)
-                console.log('round');
-                console.log(+i+1);
-            console.log(jsonObj.num_nodes);
                 if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
                     this.floor_nodes.push(this.supportB);
             }
@@ -286,7 +282,6 @@ var EntityController = {
 
         for (var o in jsonObj.members) {
             member = new Member();
-            console.log(jsonObj.members[o]);
             member.copyProp(jsonObj.members[o]);
             
             //find start node
@@ -294,24 +289,26 @@ var EntityController = {
                 if (member.isStartNode(this.nodes[j])) {
                     member.start_node=this.nodes[j];
                     this.nodes[j].connected_members.push(member);
-                    break;
                 }
             }
             //find end node
-            for (var k in this.node) {
+            for (var k in this.nodes) {
                 if (member.isEndNode(this.nodes[k])) {
                     member.end_node=this.nodes[k];
                     this.nodes[k].connected_members.push(member);
-                    break;
                 }       
             }
-            console.log(jsonObj.members[o]);
-            console.log(member);
             member.stroke='hsla(65, 100%, 60%, 1)';
             Grid.canvas.add(member);
             //push
             this.addMember(member);
         }
+
+        for (var l in this.nodes) {
+            Grid.canvas.bringToFront(this.nodes[l]); 
+        }
+
+        console.log(this);
 
         Grid.canvas.renderAll();
 
@@ -382,7 +379,6 @@ var EntityController = {
     addMember: function(member) {
         this.num_members += 1;
         this.members.push(member);
-        console.log(member);
     },
     removeNode: function(node) {
         this.num_nodes -= 1;
@@ -747,7 +743,7 @@ module.exports = function(canvas, ModeController) {
     });
 };
 },{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":8,"./Node":10}],8:[function(require,module,exports){
-var E=require('./EntityController');
+// var E=require('./EntityController');
 
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
@@ -773,6 +769,8 @@ var Member = fabric.util.createClass(fabric.Line, {
             x2: options.x2 || -100,
             y2: options.y2 || -100,
             label: options.label || '',
+            max_tensile: 12,
+            max_compressive: 8,
             force:null,
             member_length: null,
             unit_vector: [],
@@ -858,7 +856,7 @@ Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
     if(x>0){ //if the force is compressive
-        percentMax=x*100/E.max_compressive;
+        percentMax=x*100/this.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
@@ -867,7 +865,7 @@ Member.prototype.setForce=function(x){
         }
     }
     else if(x<0){ //if the force is tensile
-        percentMax=-x*100/E.max_tensile;
+        percentMax=-x*100/this.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
@@ -880,7 +878,9 @@ Member.prototype.setForce=function(x){
     }
     this.label=Math.round(x*100)/100;
 };
-},{"./EntityController":3}],9:[function(require,module,exports){
+
+
+},{}],9:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');

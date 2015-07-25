@@ -1,4 +1,4 @@
-var E=require('./EntityController');
+// var E=require('./EntityController');
 
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
@@ -24,6 +24,8 @@ var Member = fabric.util.createClass(fabric.Line, {
             x2: options.x2 || -100,
             y2: options.y2 || -100,
             label: options.label || '',
+            max_tensile: 12,
+            max_compressive: 8,
             force:null,
             member_length: null,
             unit_vector: [],
@@ -109,7 +111,7 @@ Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
     if(x>0){ //if the force is compressive
-        percentMax=x*100/E.max_compressive;
+        percentMax=x*100/this.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
@@ -118,7 +120,7 @@ Member.prototype.setForce=function(x){
         }
     }
     else if(x<0){ //if the force is tensile
-        percentMax=-x*100/E.max_tensile;
+        percentMax=-x*100/this.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
@@ -131,3 +133,4 @@ Member.prototype.setForce=function(x){
     }
     this.label=Math.round(x*100)/100;
 };
+
