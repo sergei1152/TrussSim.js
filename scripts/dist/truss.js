@@ -33,7 +33,7 @@ function calculateSupportReactions(){
 	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
-function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched
+function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched and fix glitch when  car is on two nodes only
 	var x, x1, x2, leftDistance, rightDistance;
 	for (var i=0;i<E.floor_nodes.length;i++){
 		if(!E.floor_nodes[i-1]){ //if left support node
@@ -939,7 +939,7 @@ module.exports=ResizeController;
   canvas.add(supportB);
 
   //adding  evenly distributed floor beam nodes
-  var num_floor_beams=4;
+  var num_floor_beams=6;
   for (var i=0;i<num_floor_beams;i++){
     var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
     var new_floor_node=new Node({
