@@ -711,7 +711,15 @@ var ModeController={
 	//removes the currently unplaced member from the canvas
 	clearMember:function(){
 		if(ModeController.new_member){
-			ModeController.canvas.remove(ModeController.new_member);
+			ModeController.canvas.remove(ModeController.new_member); //removing the unset member from the canvas
+			if(ModeController.new_member.start_node){
+				for(var i=0;i<ModeController.new_member.start_node.connected_members.length;i++){ //deleting the uncreated member from its start node
+					if(ModeController.new_member===ModeController.new_member.start_node.connected_members[i]){
+						ModeController.new_member.start_node.connected_members.splice(i,1);
+						break;
+					}
+				}
+			}			
 			ModeController.new_member=null;
 		}
 	},
