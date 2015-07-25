@@ -59,6 +59,23 @@ var InputController=function(){
 	    }
 	});
 
+	$('#export').click(function() {
+		// var temp = EntityController.nodes;
+		// for (var node in EntityController.nodes) {
+		// 	EntityController.nodes[node].connected_members = [];
+		// }
+		jsonStr = JSON.stringify(EntityController);
+		// EntityController.nodes = temp;
+		$('#export-cont').val(jsonStr);
+	});
+	$('#import').click(function() {
+		jsonStr = $('#export-cont').val();
+		if (jsonStr.length > 0) {
+			jsonObj = JSON.parse(jsonStr);
+			EntityController.import(jsonObj);
+		}
+	});
+
 };
 
 module.exports=InputController;

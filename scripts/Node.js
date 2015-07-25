@@ -30,12 +30,16 @@ var Node = fabric.util.createClass(fabric.Circle, {
     },
 
     
-
     toObject: function() {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             support: this.get('support'),
-            external_forces: this.get('external_forces'),
-            connected_members: this.get('connected_members')
+            floor_beam: this.get('floor_beam'),
+            left: this.get('left'),
+            top: this.get('top'),
+            lockMovementY: this.get('lockMovementY'),
+            connected_members: [],
+            // external_forces: this.get('external_forces'),
+            // connected_members: this.get('connected_members')
         });
     },
 
@@ -43,8 +47,21 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.callSuper('_render', ctx);
     }
 });
+
+Node.prototype.copyProp=function(nodeObj) {
+    this.top = nodeObj.top;
+    this.left = nodeObj.left;
+    this.support = nodeObj.support;
+    this.floor_beam = nodeObj.floor_beam;
+    this.stroke = nodeObj.stroke;
+    this.lockMovementY = nodeObj.lockMovementY;
+};
+
 module.exports=Node;
 var E=require('./EntityController');
+
+//functions for car
+
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {

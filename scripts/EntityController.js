@@ -1,5 +1,6 @@
 var Grid = require('./Grid');
 var Node=require('./Node');
+var Member=require('./Member');
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -20,6 +21,74 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //recreate everything on the canvas from the entity controller
+    import: function(jsonObj) {
+        //reset everything
+        this.clearAllNodes();
+
+        console.log(jsonObj);
+
+        //create initial nodes
+        for (var i in jsonObj.nodes) {
+            node = new Node();
+            node.copyProp(jsonObj.nodes[i]);
+            this.addNode(node);
+            //draw everyone as they come
+            Grid.canvas.add(node);
+
+            if(node.support)
+                if (i === 0) {
+                    this.supportA = node;
+                    this.floor_nodes.push(node);
+                } else {
+                    this.supportB = node;
+                    //push later in to floor_nodes;
+                }
+            if(node.floor_beam) {
+                this.floor_nodes.push(node);
+            }
+            //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
+            if ((+i+1) < jsonObj.num_nodes)
+                console.log('round');
+                console.log(+i+1);
+            console.log(jsonObj.num_nodes);
+                if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
+                    this.floor_nodes.push(this.supportB);
+            }
+        }
+
+        for (var o in jsonObj.members) {
+            member = new Member();
+            console.log(jsonObj.members[o]);
+            member.copyProp(jsonObj.members[o]);
+            
+            //find start node
+            for (var j in this.nodes) {
+                if (member.isStartNode(this.nodes[j])) {
+                    member.start_node=this.nodes[j];
+                    this.nodes[j].connected_members.push(member);
+                    break;
+                }
+            }
+            //find end node
+            for (var k in this.node) {
+                if (member.isEndNode(this.nodes[k])) {
+                    member.end_node=this.nodes[k];
+                    this.nodes[k].connected_members.push(member);
+                    break;
+                }       
+            }
+            console.log(jsonObj.members[o]);
+            console.log(member);
+            member.stroke='hsla(65, 100%, 60%, 1)';
+            Grid.canvas.add(member);
+            //push
+            this.addMember(member);
+        }
+
+        Grid.canvas.renderAll();
+
+    },
     //A reset function  
     clearAllNodes: function() {
         this.nodes=[];
@@ -53,7 +122,6 @@ var EntityController = {
           stroke: '#F41313',
           lockMovementY: true
         });
-
         this.supportA=supportA;
         this.supportB=supportB;
 
@@ -87,6 +155,7 @@ var EntityController = {
     addMember: function(member) {
         this.num_members += 1;
         this.members.push(member);
+        console.log(member);
     },
     removeNode: function(node) {
         this.num_nodes -= 1;

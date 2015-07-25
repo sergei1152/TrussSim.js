@@ -227,6 +227,7 @@ module.exports = Car;
 },{}],3:[function(require,module,exports){
 var Grid = require('./Grid');
 var Node=require('./Node');
+var Member=require('./Member');
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -247,6 +248,74 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //recreate everything on the canvas from the entity controller
+    import: function(jsonObj) {
+        //reset everything
+        this.clearAllNodes();
+
+        console.log(jsonObj);
+
+        //create initial nodes
+        for (var i in jsonObj.nodes) {
+            node = new Node();
+            node.copyProp(jsonObj.nodes[i]);
+            this.addNode(node);
+            //draw everyone as they come
+            Grid.canvas.add(node);
+
+            if(node.support)
+                if (i === 0) {
+                    this.supportA = node;
+                    this.floor_nodes.push(node);
+                } else {
+                    this.supportB = node;
+                    //push later in to floor_nodes;
+                }
+            if(node.floor_beam) {
+                this.floor_nodes.push(node);
+            }
+            //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
+            if ((+i+1) < jsonObj.num_nodes)
+                console.log('round');
+                console.log(+i+1);
+            console.log(jsonObj.num_nodes);
+                if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
+                    this.floor_nodes.push(this.supportB);
+            }
+        }
+
+        for (var o in jsonObj.members) {
+            member = new Member();
+            console.log(jsonObj.members[o]);
+            member.copyProp(jsonObj.members[o]);
+            
+            //find start node
+            for (var j in this.nodes) {
+                if (member.isStartNode(this.nodes[j])) {
+                    member.start_node=this.nodes[j];
+                    this.nodes[j].connected_members.push(member);
+                    break;
+                }
+            }
+            //find end node
+            for (var k in this.node) {
+                if (member.isEndNode(this.nodes[k])) {
+                    member.end_node=this.nodes[k];
+                    this.nodes[k].connected_members.push(member);
+                    break;
+                }       
+            }
+            console.log(jsonObj.members[o]);
+            console.log(member);
+            member.stroke='hsla(65, 100%, 60%, 1)';
+            Grid.canvas.add(member);
+            //push
+            this.addMember(member);
+        }
+
+        Grid.canvas.renderAll();
+
+    },
     //A reset function  
     clearAllNodes: function() {
         this.nodes=[];
@@ -280,7 +349,6 @@ var EntityController = {
           stroke: '#F41313',
           lockMovementY: true
         });
-
         this.supportA=supportA;
         this.supportB=supportB;
 
@@ -314,6 +382,7 @@ var EntityController = {
     addMember: function(member) {
         this.num_members += 1;
         this.members.push(member);
+        console.log(member);
     },
     removeNode: function(node) {
         this.num_nodes -= 1;
@@ -345,7 +414,7 @@ var EntityController = {
 };
 
 module.exports = EntityController;
-},{"./Grid":5,"./Node":10}],4:[function(require,module,exports){
+},{"./Grid":5,"./Member":8,"./Node":10}],4:[function(require,module,exports){
 var ForceLine = fabric.util.createClass(fabric.Line, {
     type: 'forceline',
 
@@ -497,6 +566,23 @@ var InputController=function(){
 	        Grid.grid_size = new_grid_size;
 	        Grid.createGrid();
 	    }
+	});
+
+	$('#export').click(function() {
+		// var temp = EntityController.nodes;
+		// for (var node in EntityController.nodes) {
+		// 	EntityController.nodes[node].connected_members = [];
+		// }
+		jsonStr = JSON.stringify(EntityController);
+		// EntityController.nodes = temp;
+		$('#export-cont').val(jsonStr);
+	});
+	$('#import').click(function() {
+		jsonStr = $('#export-cont').val();
+		if (jsonStr.length > 0) {
+			jsonObj = JSON.parse(jsonStr);
+			EntityController.import(jsonObj);
+		}
 	});
 
 };
@@ -696,12 +782,29 @@ var Member = fabric.util.createClass(fabric.Line, {
     },
 
     toObject: function() {
-        return fabric.util.object.extend(this.callSuper('toObject'), {
-            force: this.get('force'),
-            start_node: this.get('start_node'),
-            end_node: this.get('end_node'),
-            label: this.get('label')
-        });
+        retObj = {};
+        var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+        for (var i in impAttr) {
+            retObj[impAttr[i]] = this[impAttr[i]];
+        }
+        retObj.start_node = null;
+        retObj.end_node = null;
+        return fabric.util.object.extend(this.callSuper('toObject'), retObj
+        // {
+            // start_node: null,
+            // end_node: null,
+
+            // x1: this.get('x1'),
+            // x2: this.get('x2'),
+            // y1: this.get('y1'),
+            // y2: this.get('y2'),
+            // member_length: this.get('member_length')
+            // force: this.get('force'),
+            // start_node: this.get('start_node'),
+            // end_node: this.get('end_node'),
+            // label: this.get('label')
+        // }
+        );
     },
 
     _render: function(ctx) {
@@ -720,6 +823,36 @@ Member.prototype.calcUnitVector=function(){
     this.unit_vector[0]=(this.x2-this.x1)/this.member_length;
     this.unit_vector[1]=(this.y2-this.y1)/this.member_length;
 };
+
+Member.prototype.copyProp=function(memberObj) {
+    var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+    for (var i in impAttr) {
+        this[impAttr[i]] = memberObj[impAttr[i]];
+    }
+    // this.x1=memberObj.x1;
+    // this.y1=memberObj.y1;
+    // this.x2=memberObj.x2;
+    // this.y2=memberObj.y2;
+    // this.member_length=memberObj.member_length;
+    // this.width=memberObj.width;
+    // this.height=memberObj.height;
+    // this.left=memberObj.left;
+    // this.top=memberObj.top;
+};
+
+Member.prototype.isStartNode=function(nodeObj) {
+    if (Math.round(nodeObj.left) == Math.round(this.x1) && Math.round(nodeObj.top) == Math.round(this.y1))
+        return true;
+    return false;
+};
+
+Member.prototype.isEndNode=function(nodeObj) {
+    if (Math.round(nodeObj.left) == Math.round(this.x2) && Math.round(nodeObj.top) == Math.round(this.y2))
+        return true;
+    return false;
+};
+
+module.exports=Member;
 
 Member.prototype.setForce=function(x){
     this.force=x;
@@ -747,8 +880,6 @@ Member.prototype.setForce=function(x){
     }
     this.label=Math.round(x*100)/100;
 };
-
-module.exports=Member;
 },{"./EntityController":3}],9:[function(require,module,exports){
 //Sets the current mode based on what button the user presses, as well as holds the context for the current node and member
 //TODO: Set cursors based on what mode is selected
@@ -864,12 +995,16 @@ var Node = fabric.util.createClass(fabric.Circle, {
     },
 
     
-
     toObject: function() {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             support: this.get('support'),
-            external_forces: this.get('external_forces'),
-            connected_members: this.get('connected_members')
+            floor_beam: this.get('floor_beam'),
+            left: this.get('left'),
+            top: this.get('top'),
+            lockMovementY: this.get('lockMovementY'),
+            connected_members: [],
+            // external_forces: this.get('external_forces'),
+            // connected_members: this.get('connected_members')
         });
     },
 
@@ -877,8 +1012,21 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.callSuper('_render', ctx);
     }
 });
+
+Node.prototype.copyProp=function(nodeObj) {
+    this.top = nodeObj.top;
+    this.left = nodeObj.left;
+    this.support = nodeObj.support;
+    this.floor_beam = nodeObj.floor_beam;
+    this.stroke = nodeObj.stroke;
+    this.lockMovementY = nodeObj.lockMovementY;
+};
+
 module.exports=Node;
 var E=require('./EntityController');
+
+//functions for car
+
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {
