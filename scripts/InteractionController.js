@@ -13,7 +13,7 @@ module.exports = function(canvas, ModeController) {
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
-                'top': event.e.y - 220
+                'top': event.e.pageY - $('#canvas-wrapper').offset().top
             });
             canvas.renderAll();
         }
@@ -21,7 +21,7 @@ module.exports = function(canvas, ModeController) {
         else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
-                'y2': event.e.y - 220
+                'y2': event.e.pageY - $('#canvas-wrapper').offset().top
             });
             canvas.renderAll();
         }
