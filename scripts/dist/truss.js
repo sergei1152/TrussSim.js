@@ -456,7 +456,7 @@ module.exports = function(canvas, ModeController) {
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
                 'left': event.e.x,
-                'top': event.e.y - 220
+                'top': event.e.pageY - $('#canvas-wrapper').offset().top
             });
             canvas.renderAll();
         }
@@ -464,7 +464,7 @@ module.exports = function(canvas, ModeController) {
         else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
-                'y2': event.e.y - 220
+                'y2': event.e.pageY - $('#canvas-wrapper').offset().top
             });
             canvas.renderAll();
         }
@@ -662,22 +662,24 @@ Member.prototype.calcUnitVector=function(){
 Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
-    if(x<0){ //if the force is compressive
-        percentMax=-x*100/E.max_compressive;
+    console.log("compressive: "+E.max_compressive);
+    console.log("tensile: "+E.max_tensile);
+    if(x>0){ //if the force is compressive
+        percentMax=x*100/E.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
-            this.stroke='hsla(360, 0%,0%, 1)';
+            this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(360, '+percentMax+'%,50%, 1)';
+            this.stroke='hsla(243, '+(percentMax*0.3+70)+'%,50%, 1)';
         }
     }
-    else if(x>0){ //if the force is tensile
-        percentMax=x*100/E.max_tensile;
+    else if(x<0){ //if the force is tensile
+        percentMax=-x*100/E.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
-            this.stroke='hsla(243, 0%,0%, 1)';
+            this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(243, '+percentMax+'%,50%, 1)';
+            this.stroke='hsla(360, '+(percentMax*0.3+70)+'%,50%, 1)';
         }
     }
     else{
@@ -952,7 +954,7 @@ module.exports=ResizeController;
   canvas.add(supportB);
 
   //adding  evenly distributed floor beam nodes
-  var num_floor_beams=6;
+  var num_floor_beams=4;
   for (var i=0;i<num_floor_beams;i++){
     var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
     var new_floor_node=new Node({
