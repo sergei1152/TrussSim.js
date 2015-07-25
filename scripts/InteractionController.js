@@ -12,16 +12,16 @@ module.exports = function(canvas, ModeController) {
         //if in 'add-node' mode
         if (ModeController.mode === 'add_node') {
             ModeController.new_node.set({ //set the new node to follow the cursor
-                'left': event.e.x,
-                'top': event.e.y -220
+                'left': event.e.pagex,
+                'top': event.e.pagey
             });
             canvas.renderAll();
         }
         //if in 'add-member' mode and the start of the member has been placed already
         else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
-                'x2': event.e.x,
-                'y2': event.e.y - 220
+                'x2': event.e.pagex,
+                'y2': event.e.pagey
             });
             canvas.renderAll();
         }
