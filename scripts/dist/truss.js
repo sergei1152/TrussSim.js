@@ -33,7 +33,7 @@ function calculateSupportReactions(){
 	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
-function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched and fix glitch when  car is on two nodes only
+function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched
 	var x, x1, x2, leftDistance, rightDistance;
 	for (var i=0;i<E.floor_nodes.length;i++){
 		if(!E.floor_nodes[i-1]){ //if left support node
@@ -571,6 +571,7 @@ module.exports = function(canvas, ModeController) {
         }
     }); 
 
+
     $('#simulation-button').on('click', function() {
         if (!EntityController.isValid()) { //if the bridge design is not valid
             alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
@@ -718,7 +719,6 @@ var ModeController={
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
-		alert("ok");
 	},
 	move_mode:function(){
 		this.mode='move';
@@ -747,12 +747,18 @@ var ModeController={
 };
 
 
-
-
-$('#eraser-button').on('click',ModeController.erase_mode);
-$('#move-button').on('click',ModeController.move_mode);
-$('#add-member-button').on('click',ModeController.add_member_mode);
-$('#add-node-button').on('click',ModeController.add_node_mode);
+    $('#eraser-button').on('click',function () {
+    	ModeController.erase_mode();
+    });
+    $('#move-button').on('click',function () {
+    	ModeController.move_mode();
+    });
+    $('#add-member-button').on('click',function() {
+    	ModeController.add_member_mode();
+    });
+    $('#add-node-button').on('click',function() {
+    	ModeController.add_node_mode();
+    });
 
 module.exports=ModeController;
 

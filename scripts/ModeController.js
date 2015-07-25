@@ -29,7 +29,6 @@ var ModeController={
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
-		alert("ok");
 	},
 	move_mode:function(){
 		this.mode='move';
@@ -57,12 +56,17 @@ var ModeController={
 
 };
 
-
-
-
-$('#eraser-button').on('click',ModeController.erase_mode);
-$('#move-button').on('click',ModeController.move_mode);
-$('#add-member-button').on('click',ModeController.add_member_mode);
-$('#add-node-button').on('click',ModeController.add_node_mode);
+$('#eraser-button').on('click',function () {
+	ModeController.erase_mode();
+});a
+$('#move-button').on('click',function () {
+	ModeController.move_mode();
+});
+$('#add-member-button').on('click',function() {
+	ModeController.add_member_mode();
+});
+$('#add-node-button').on('click',function() {
+	ModeController.add_node_mode();
+});
 
 module.exports=ModeController;

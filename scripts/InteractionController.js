@@ -128,6 +128,7 @@ module.exports = function(canvas, ModeController) {
         }
     }); 
 
+
     $('#simulation-button').on('click', function() {
         if (!EntityController.isValid()) { //if the bridge design is not valid
             alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
