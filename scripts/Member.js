@@ -61,8 +61,6 @@ Member.prototype.calcUnitVector=function(){
 Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
-    console.log("compressive: "+E.max_compressive);
-    console.log("tensile: "+E.max_tensile);
     if(x>0){ //if the force is compressive
         percentMax=x*100/E.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force

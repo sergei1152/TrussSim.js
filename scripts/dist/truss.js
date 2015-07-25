@@ -219,14 +219,14 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FFFFFF'; //color of the font
-        ctx.fillText(this.label, -this.width / 4, -this.height / 2+30);
+        ctx.fillText(this.label, -this.width / 4, -this.height / 3+30);
     }
 });
 
 module.exports = Car;
 },{}],3:[function(require,module,exports){
 var Grid = require('./Grid');
-
+var Node=require('./Node');
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -247,6 +247,66 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //A reset function  
+    clearAllNodes: function() {
+        this.nodes=[];
+        this.members=[];
+        this.floor_nodes=[];
+        this.car = this.supportA = this.supportB = null;
+        Grid.canvas.clear().renderAll();
+        Grid.createGrid();
+        this.num_nodes = 0;
+        this.num_members = 0;
+    },
+    createFloorNodes: function(num_floor_beams) {
+        //delete everything else if this function is called since it will be a mess otherwise
+        this.clearAllNodes();
+        var canvasHeight = $('#canvas-wrapper').height();
+        var canvasWidth = $('#canvas-wrapper').width();
+        //Adding inital support nodes
+        var supportA=new Node({
+          support: true,
+          floor_beam: true,
+          left: canvasWidth/8,
+          top: canvasHeight/3,
+          stroke: '#F41313',
+          lockMovementY: true
+        });
+        var supportB=new Node({
+          support: true,
+          floor_beam: true,
+          left: canvasWidth*7/8,
+          top: canvasHeight/3,
+          stroke: '#F41313',
+          lockMovementY: true
+        });
+
+        this.supportA=supportA;
+        this.supportB=supportB;
+
+        EntityController.floor_nodes.push(supportA);
+        EntityController.addNode(supportA);
+        EntityController.addNode(supportB);
+        Grid.canvas.add(supportA);
+        Grid.canvas.add(supportB);
+
+        //adding  evenly distributed floor beam nodes
+        for (var i=0;i<num_floor_beams;i++){
+            var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
+            var new_floor_node=new Node({
+                floor_beam: true,
+                left: supportA.left+(i+1)*spacing,
+                top: canvasHeight/3,
+                stroke: '#000000',
+                lockMovementY: true
+            });
+            EntityController.addNode(new_floor_node);
+            EntityController.floor_nodes.push(new_floor_node);
+            Grid.canvas.add(new_floor_node);
+        }
+        EntityController.floor_nodes.push(supportB);
+        Grid.canvas.renderAll();
+    },
     addNode: function(node) {
         this.num_nodes += 1;
         this.nodes.push(node);
@@ -285,7 +345,7 @@ var EntityController = {
 };
 
 module.exports = EntityController;
-},{"./Grid":5}],4:[function(require,module,exports){
+},{"./Grid":5,"./Node":10}],4:[function(require,module,exports){
 var ForceLine = fabric.util.createClass(fabric.Line, {
     type: 'forceline',
 
@@ -380,6 +440,7 @@ module.exports = Grid;
 },{}],6:[function(require,module,exports){
 var EntityController=require('./EntityController');
 var Grid=require('./Grid');
+var Node=require('./Node');
 
 var InputController=function(){
 
@@ -422,8 +483,9 @@ var InputController=function(){
 
 	$('#num-floor-input').change(function() {
 	    var num_floor_nodes = parseInt($(this).val());
-	    if (!isNaN(num_floor_nodes)) {
-	       
+	    console.log(num_floor_nodes);
+	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) {
+	       EntityController.createFloorNodes(num_floor_nodes);
 	    }
 	});
 
@@ -440,7 +502,7 @@ var InputController=function(){
 };
 
 module.exports=InputController;
-},{"./EntityController":3,"./Grid":5}],7:[function(require,module,exports){
+},{"./EntityController":3,"./Grid":5,"./Node":10}],7:[function(require,module,exports){
 var Node = require('./Node');
 var Member = require('./Member');
 var Car = require('./Car');
@@ -581,7 +643,7 @@ module.exports = function(canvas, ModeController) {
                 width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
                 height: Grid.grid_size,
                 left: 50,
-                top: canvas.getHeight() / 2 - 40,
+                top: canvas.getHeight() / 3 - 40,
                 label: 'Distributed Load',
                 length: EntityController.car_length,
                 weight: EntityController.car_weight
@@ -662,8 +724,6 @@ Member.prototype.calcUnitVector=function(){
 Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
-    console.log("compressive: "+E.max_compressive);
-    console.log("tensile: "+E.max_tensile);
     if(x>0){ //if the force is compressive
         percentMax=x*100/E.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
@@ -772,7 +832,7 @@ $('#add-node-button').on('click',function() {
 module.exports=ModeController;
 
 },{"./Member":8,"./Node":10}],10:[function(require,module,exports){
-var E=require('./EntityController');
+
 var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {
@@ -817,7 +877,8 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.callSuper('_render', ctx);
     }
 });
-
+module.exports=Node;
+var E=require('./EntityController');
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {
@@ -875,7 +936,7 @@ Node.prototype.isCarOn=function(){
     return false;
 };
 
-module.exports=Node;
+
 },{"./EntityController":3,"./ForceLine":4}],11:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
@@ -908,9 +969,9 @@ module.exports=ResizeController;
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
   var ResizeController = require('./ResizeController');
+  var Node=require('./Node');
   var EntityController=require('./EntityController');
   var InputController=require('./InputController');
-  var Node=require('./Node');
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: false
   });
@@ -923,52 +984,14 @@ module.exports=ResizeController;
   ResizeController.grid = Grid;
   ResizeController.resizeCanvas(); //creates the grid as well, and recreates it upon a window resize 
 
-
   InteractionController(canvas, ModeController);
   InputController();
 
-  //Adding inital support nodes
-  var supportA=new Node({
-    support: true,
-    floor_beam: true,
-    left: canvas.getWidth()/8,
-    top:canvas.getHeight()/2,
-    stroke: '#F41313',
-    lockMovementY: true
-  });
-  var supportB=new Node({
-    support: true,
-    floor_beam: true,
-    left: canvas.getWidth()*7/8,
-    top:canvas.getHeight()/2,
-    stroke: '#F41313',
-    lockMovementY: true
-  });
-  
-  EntityController.supportA=supportA;
-  EntityController.supportB=supportB;
-  EntityController.floor_nodes.push(supportA);
-  EntityController.addNode(supportA);
-  EntityController.addNode(supportB);
-  canvas.add(supportA);
-  canvas.add(supportB);
+  var num_floor_beams=1;
 
-  //adding  evenly distributed floor beam nodes
-  var num_floor_beams=4;
-  for (var i=0;i<num_floor_beams;i++){
-    var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
-    var new_floor_node=new Node({
-      floor_beam: true,
-      left: supportA.left+(i+1)*spacing,
-      top:canvas.getHeight()/2,
-      stroke: '#000000',
-      lockMovementY: true
-    });
-    EntityController.addNode(new_floor_node);
-    EntityController.floor_nodes.push(new_floor_node);
-    canvas.add(new_floor_node);
-  }
-  EntityController.floor_nodes.push(supportB);
+  EntityController.createFloorNodes(num_floor_beams);
+
+
 
 
 

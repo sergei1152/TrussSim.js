@@ -33,7 +33,7 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FFFFFF'; //color of the font
-        ctx.fillText(this.label, -this.width / 4, -this.height / 2+30);
+        ctx.fillText(this.label, -this.width / 4, -this.height / 3+30);
     }
 });
 

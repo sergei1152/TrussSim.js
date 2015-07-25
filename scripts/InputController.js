@@ -1,5 +1,6 @@
 var EntityController=require('./EntityController');
 var Grid=require('./Grid');
+var Node=require('./Node');
 
 var InputController=function(){
 
@@ -42,8 +43,9 @@ var InputController=function(){
 
 	$('#num-floor-input').change(function() {
 	    var num_floor_nodes = parseInt($(this).val());
-	    if (!isNaN(num_floor_nodes)) {
-	       
+	    console.log(num_floor_nodes);
+	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) {
+	       EntityController.createFloorNodes(num_floor_nodes);
 	    }
 	});
 

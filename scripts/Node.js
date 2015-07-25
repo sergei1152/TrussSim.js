@@ -1,4 +1,4 @@
-var E=require('./EntityController');
+
 var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {
@@ -43,7 +43,8 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.callSuper('_render', ctx);
     }
 });
-
+module.exports=Node;
+var E=require('./EntityController');
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
     for (var i = 0; i < this.connected_members.length; i++) {
@@ -101,4 +102,3 @@ Node.prototype.isCarOn=function(){
     return false;
 };
 
-module.exports=Node;

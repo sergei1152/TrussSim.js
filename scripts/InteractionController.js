@@ -138,7 +138,7 @@ module.exports = function(canvas, ModeController) {
                 width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
                 height: Grid.grid_size,
                 left: 50,
-                top: canvas.getHeight() / 2 - 40,
+                top: canvas.getHeight() / 3 - 40,
                 label: 'Distributed Load',
                 length: EntityController.car_length,
                 weight: EntityController.car_weight

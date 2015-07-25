@@ -1,5 +1,5 @@
 var Grid = require('./Grid');
-
+var Node=require('./Node');
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -20,6 +20,66 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //A reset function  
+    clearAllNodes: function() {
+        this.nodes=[];
+        this.members=[];
+        this.floor_nodes=[];
+        this.car = this.supportA = this.supportB = null;
+        Grid.canvas.clear().renderAll();
+        Grid.createGrid();
+        this.num_nodes = 0;
+        this.num_members = 0;
+    },
+    createFloorNodes: function(num_floor_beams) {
+        //delete everything else if this function is called since it will be a mess otherwise
+        this.clearAllNodes();
+        var canvasHeight = $('#canvas-wrapper').height();
+        var canvasWidth = $('#canvas-wrapper').width();
+        //Adding inital support nodes
+        var supportA=new Node({
+          support: true,
+          floor_beam: true,
+          left: canvasWidth/8,
+          top: canvasHeight/3,
+          stroke: '#F41313',
+          lockMovementY: true
+        });
+        var supportB=new Node({
+          support: true,
+          floor_beam: true,
+          left: canvasWidth*7/8,
+          top: canvasHeight/3,
+          stroke: '#F41313',
+          lockMovementY: true
+        });
+
+        this.supportA=supportA;
+        this.supportB=supportB;
+
+        EntityController.floor_nodes.push(supportA);
+        EntityController.addNode(supportA);
+        EntityController.addNode(supportB);
+        Grid.canvas.add(supportA);
+        Grid.canvas.add(supportB);
+
+        //adding  evenly distributed floor beam nodes
+        for (var i=0;i<num_floor_beams;i++){
+            var spacing=(supportB.left-supportA.left)/(num_floor_beams+1);
+            var new_floor_node=new Node({
+                floor_beam: true,
+                left: supportA.left+(i+1)*spacing,
+                top: canvasHeight/3,
+                stroke: '#000000',
+                lockMovementY: true
+            });
+            EntityController.addNode(new_floor_node);
+            EntityController.floor_nodes.push(new_floor_node);
+            Grid.canvas.add(new_floor_node);
+        }
+        EntityController.floor_nodes.push(supportB);
+        Grid.canvas.renderAll();
+    },
     addNode: function(node) {
         this.num_nodes += 1;
         this.nodes.push(node);
