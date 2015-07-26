@@ -43,7 +43,6 @@ var InputController=function(){
 
 	$('#num-floor-input').change(function() {
 	    var num_floor_nodes = parseInt($(this).val());
-	    console.log(num_floor_nodes);
 	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) {
 	       EntityController.createFloorNodes(num_floor_nodes);
 	    }
@@ -59,25 +58,34 @@ var InputController=function(){
 	    }
 	});
 
-	$('#export').click(function() {
-		// var temp = EntityController.nodes;
-		// for (var node in EntityController.nodes) {
-		// 	EntityController.nodes[node].connected_members = [];
-		// }
-		jsonStr = JSON.stringify(EntityController);
-		// EntityController.nodes = temp;
+	$('#exportBtn').click(function() {
+		jsonStr = JSON.stringify(EntityController.export());
 		$('#export-cont').val(jsonStr);
+		$('#uniqueHash').val(EntityController.exportHash(jsonStr));
 		return false;
 	});
-	$('#import').click(function() {
+
+	$('#importBtn').click(function() {
 		jsonStr = $('#export-cont').val();
 		if (jsonStr.length > 0) {
-			jsonObj = JSON.parse(jsonStr);
-			EntityController.import(jsonObj);
+			if (jsonStr.charAt(1) == 'A') {
+				EntityController.importHash(jsonStr);
+			} else {
+				jsonObj = JSON.parse(jsonStr);
+				EntityController.import(jsonObj);
+			}
 		}
 		return false;
 	});
 
+	$('#export-cont').click(function () {
+		this.select();
+	});
+	$('#uniqueHash').click(function() {
+		this.select();
+	});
 };
+
+
 
 module.exports=InputController;

@@ -1,6 +1,12 @@
 var Grid = require('./Grid');
 var Node=require('./Node');
 var Member=require('./Member');
+
+String.prototype.replaceAll = function(str1, str2, ignore) 
+{
+    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+};
+
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -24,11 +30,97 @@ var EntityController = {
     //color stuff
     erase_fill: '#E43A3A',
     node_fill: '#FFFFFF',
+
+    exportHash: function(jsonStr) {
+        //replace common phrases with specific characters that will not be used and in an order that is particular        
+        var hashStr = jsonStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in phrases) {
+            hashStr = hashStr.replaceAll(i, phrases[i]);     
+        }
+
+        //replace the nodeStr part
+        nodeStrRep = /"nodestr"(\s|\S)+?(?=A)/g;
+        hashStr = hashStr.replace(nodeStrRep, '');
+
+        for (i in numComb) {
+            hashStr = hashStr.replace(i, numComb[i]);     
+        }
+
+        for (i in numDec) {
+            hashStr = hashStr.replace(i, numDec[i]);                 
+        }
+
+        return hashStr;
+    },
+    importHash: function(hashStr) {
+        var jsonStr = hashStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in numDec) {
+            jsonStr = jsonStr.replaceAll(numDec[i], i);                 
+        }
+        
+        for (i in numComb) {
+            jsonStr = jsonStr.replaceAll(numComb[i], i);     
+        }
+
+        for (i in phrases) {
+            jsonStr = jsonStr.replaceAll(phrases[i], i);     
+        }
+
+        this.import(JSON.parse(jsonStr));
+    },
+
+    //export
+    export: function() {
+        var exportObj = {};
+        var impProp = ['nodes', 'members'];
+        var nodeStr = "";
+        //added extra info to quickly get important information
+        for (var j in this.nodes) {
+            if (!this.nodes[j].floor_beam)
+                nodeStr += "("+(Math.round(this.nodes[j].left*100)/100)+", "+(Math.round(this.nodes[j].top*100)/100)+"), ";
+        }
+        exportObj.nodestr = nodeStr;
+
+        for (var i in impProp) {
+            exportObj[impProp[i]] = this[impProp[i]];
+        }
+
+        return exportObj;
+    },
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
         this.clearAllNodes();
-
         //create initial nodes
         for (var i in jsonObj.nodes) {
             node = new Node();

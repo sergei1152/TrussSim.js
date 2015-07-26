@@ -45,7 +45,6 @@ module.exports = function(canvas, ModeController) {
                         x2: event.target.left,
                         y2: event.target.top
                     });
-
                     ModeController.new_member.start_node = event.target;
                     event.target.connected_members.push(ModeController.new_member);
                     canvas.renderAll();

@@ -36,28 +36,11 @@ var Member = fabric.util.createClass(fabric.Line, {
 
     toObject: function() {
         retObj = {};
-        var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+        var impAttr = ['x1', 'x2', 'y1', 'y2'];
         for (var i in impAttr) {
             retObj[impAttr[i]] = this[impAttr[i]];
         }
-        retObj.start_node = null;
-        retObj.end_node = null;
-        return fabric.util.object.extend(this.callSuper('toObject'), retObj
-        // {
-            // start_node: null,
-            // end_node: null,
-
-            // x1: this.get('x1'),
-            // x2: this.get('x2'),
-            // y1: this.get('y1'),
-            // y2: this.get('y2'),
-            // member_length: this.get('member_length')
-            // force: this.get('force'),
-            // start_node: this.get('start_node'),
-            // end_node: this.get('end_node'),
-            // label: this.get('label')
-        // }
-        );
+        return retObj;
     },
 
     _render: function(ctx) {
@@ -78,19 +61,15 @@ Member.prototype.calcUnitVector=function(){
 };
 
 Member.prototype.copyProp=function(memberObj) {
-    var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+    var impAttr = ['x1', 'x2', 'y1', 'y2'];
     for (var i in impAttr) {
         this[impAttr[i]] = memberObj[impAttr[i]];
     }
-    // this.x1=memberObj.x1;
-    // this.y1=memberObj.y1;
-    // this.x2=memberObj.x2;
-    // this.y2=memberObj.y2;
-    // this.member_length=memberObj.member_length;
-    // this.width=memberObj.width;
-    // this.height=memberObj.height;
-    // this.left=memberObj.left;
-    // this.top=memberObj.top;
+    this.width = Math.abs(this.x1-this.x2);
+    this.height = Math.abs(this.y1-this.y2);
+    this.left = Math.min(this.x1,this.x2)+this.width/2;
+    this.top = Math.min(this.y1, this.y2)+this.height/2;
+    this.member_length = Math.sqrt(this.width*this.width+this.height*this.height);
 };
 
 Member.prototype.isStartNode=function(nodeObj) {

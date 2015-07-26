@@ -49,15 +49,16 @@
 							<label for="num-floor">Number of Floor Nodes</label>
 							<input type="text" class="form-control"  id='num-floor-input'  name="num-floor" placeholder="Default: 6">
 						</div>
+					</form>
 
 						<div class="form-group">
-							<label for="export-cont">Copy and Paste Here</label>
-							<textarea class="form-control" id="export-cont"></textarea>
-							<button class="btn btn-default" id='export'>Export</button>
-							<button class="btn btn-primary" id='import'>Import</button>
+							<label for="export-cont">Export and Import</label>
+							<textarea class="form-control" id="export-cont" placeholder="Copy and paste here to import"></textarea>
+							<input type="text" class="form-control" id="uniqueHash" placeholder="Unique Generated Hash" readonly="true">
+							<button class="btn btn-default" id='exportBtn'>Export</button>
+							<button class="btn btn-primary" id='importBtn'>Import</button>
 						</div>
 						
-					</form>
 			<br>
 			<div class="menu-buttons">
 				<button class="btn btn-default" id='move-button'>Move</button>

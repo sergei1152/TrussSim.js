@@ -30,16 +30,12 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     
     toObject: function() {
-        return fabric.util.object.extend(this.callSuper('toObject'), {
+        return {
             support: this.get('support'),
             floor_beam: this.get('floor_beam'),
             left: this.get('left'),
             top: this.get('top'),
-            lockMovementY: this.get('lockMovementY'),
-            connected_members: [],
-            // external_forces: this.get('external_forces'),
-            // connected_members: this.get('connected_members')
-        });
+        };
     },
 
     _render: function(ctx) {
@@ -52,8 +48,16 @@ Node.prototype.copyProp=function(nodeObj) {
     this.left = nodeObj.left;
     this.support = nodeObj.support;
     this.floor_beam = nodeObj.floor_beam;
-    this.stroke = nodeObj.stroke;
-    this.lockMovementY = nodeObj.lockMovementY;
+    if (this.support) {
+        this.lockMovementY = true;
+    } else {
+        this.lockMovementY = false;
+    }
+    if (this.support) {
+        this.stroke = '#F41313';
+    } else if (this.floor_beam) {
+        this.stroke = '#000000';
+    } //else default
 };
 
 module.exports=Node;
