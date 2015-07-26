@@ -14,6 +14,32 @@ var ModeController={
 	new_node:null,
 	new_member: null,
 
+	setButtonStates:function() {
+		var modeId={
+			'move':'move-button', 
+			'erase':'eraser-button', 
+			'add_member':'add-member-button', 
+			'add_node':'add-node-button'
+		};
+		for (var i in modeId) {
+			if (this.mode == i) {
+				//add active class
+				$('#'+modeId[i]).addClass('active');
+				//remove active class from others
+				for (var j in modeId) {
+					if (j != i) {
+						$('#'+modeId[j]).removeClass('active');
+					}
+				}
+			}
+		}
+		//also set simulation button as active
+		if (this.simulation) {
+			$('#simulation-button').addClass('active');
+		} else {
+			$('#simulation-button').removeClass('active');
+		}
+	},
 	//removes the currently unplaced node from the canvas
 	clearNode:function(){
 		if(ModeController.new_node){
@@ -40,11 +66,13 @@ var ModeController={
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	move_mode:function(){
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	simulation_mode:function(){
 		this.simulation=!this.simulation;
@@ -84,6 +112,7 @@ var ModeController={
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
@@ -93,6 +122,7 @@ var ModeController={
 			this.new_member=new Member();
 			this.canvas.add(this.new_member); //adds the new member to the canvas
 		}
+		this.setButtonStates();
 	},
 	add_node_mode:function(){
 		this.clearMember(); //gets rid of any existing unplaced members
@@ -102,8 +132,8 @@ var ModeController={
 			this.new_node=new Node();
 			this.canvas.add(this.new_node); //adds the new node to the canvas
 		}
+		this.setButtonStates();
 	}
-
 };
 
 $('#eraser-button').on('click',function () {

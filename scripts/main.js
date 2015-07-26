@@ -24,6 +24,7 @@
 
   EntityController.createFloorNodes(num_floor_beams);
 
+  ModeController.move_mode();
 
 
 
