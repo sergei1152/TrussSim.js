@@ -67,6 +67,7 @@ var InputController=function(){
 		jsonStr = JSON.stringify(EntityController);
 		// EntityController.nodes = temp;
 		$('#export-cont').val(jsonStr);
+		return false;
 	});
 	$('#import').click(function() {
 		jsonStr = $('#export-cont').val();
@@ -74,6 +75,7 @@ var InputController=function(){
 			jsonObj = JSON.parse(jsonStr);
 			EntityController.import(jsonObj);
 		}
+		return false;
 	});
 
 };

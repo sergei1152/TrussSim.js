@@ -103,6 +103,12 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of car on right member (position of right node minus position of current node)
 				E.floor_nodes[i].setForce(0,-((x1/2+x2/2)*E.car_weight/E.car_length_px),Grid.canvas);
 			}
+			else if ((E.car.left+E.car_length_px/2)<E.floor_nodes[i+1].left){ //if the car is on the right member but not on top of any nodes
+				console.log('car is on right member');
+			}
+			else if ((E.car.left-E.car_length_px/2)>E.floor_nodes[i-1].left){ //if the car is on the left member but not on top of any nodes
+				console.log('car is on left member');
+			}
 			else{
 				E.floor_nodes[i].setForce(0,0,Grid.canvas);
 			}
@@ -146,19 +152,17 @@ function methodOfJoints(){
 
 	}
 
+	//eliminating last 3 equation since we have 2N equations and have 2N-3 members, thus we have 3 extra equations 
 	force_matrix.pop();
-		force_matrix.pop();
-
 	force_matrix.pop();
-			// force_matrix.pop();
-
+	force_matrix.pop();
 	solution.pop();
 	solution.pop();
 	solution.pop();
-		// solution.pop();
 
-	var forces=numeric.solve(force_matrix, solution, false);
+	var forces=numeric.solve(force_matrix, solution, false); //solving for the forces
 
+	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
 	}
@@ -572,6 +576,7 @@ var InputController=function(){
 		jsonStr = JSON.stringify(EntityController);
 		// EntityController.nodes = temp;
 		$('#export-cont').val(jsonStr);
+		return false;
 	});
 	$('#import').click(function() {
 		jsonStr = $('#export-cont').val();
@@ -579,6 +584,7 @@ var InputController=function(){
 			jsonObj = JSON.parse(jsonStr);
 			EntityController.import(jsonObj);
 		}
+		return false;
 	});
 
 };
