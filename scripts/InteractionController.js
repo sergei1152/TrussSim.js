@@ -131,6 +131,19 @@ module.exports = function(canvas, ModeController) {
 
     $('#simulation-button').on('click', function() {
         ModeController.simulation_mode();
+        if(ModeController.simulation){
+           $('#simulation-button').html('Stop Simulation');
+            $("#add-node-button").attr("disabled", true);
+            $("#add-member-button").attr("disabled", true);
+            $("#eraser-button").attr("disabled", true);
+        }
+        else{
+            $('#simulation-button').html('Start Simulation');
+            $("#add-node-button").attr("disabled", false);
+            $("#add-member-button").attr("disabled", false);
+            $("#eraser-button").attr("disabled", false);
+        }
+
         return false;
     });
 };
