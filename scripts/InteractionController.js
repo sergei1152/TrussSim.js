@@ -18,7 +18,7 @@ module.exports = function(canvas, ModeController) {
             canvas.renderAll();
         }
         //if in 'add-member' mode and the start of the member has been placed already
-        else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node)  && !ModeController.simulation) {
+        else if (ModeController.mode === 'add_member' && (ModeController.new_member.start_node && !ModeController.new_member.end_node) && !ModeController.simulation) {
             ModeController.new_member.set({ //set the end of the member to follow the cursor
                 'x2': event.e.x,
                 'y2': event.e.pageY - $('#canvas-wrapper').offset().top
@@ -65,32 +65,67 @@ module.exports = function(canvas, ModeController) {
                     canvas.add(ModeController.new_member);
                 }
             }
-        }
+        } else if (ModeController.mode === 'erase' && !ModeController.simulation && event.target) {
+            var nodeToRemove = event.target;
+            if (!nodeToRemove.support && !nodeToRemove.floor_beam) { //if a regular node, allow deletion
+                var membersToRemove = [];
+                var i, j;
+                //iterate and remove from canvas all of the node's connected members
+                for (i = 0; i < nodeToRemove.connected_members.length; i++) { //iterate through all of the node's connected members
+                    if (nodeToRemove.connected_members[i].start_node === nodeToRemove) { //if the connected members start node is the node to remove
+                        for (j = 0; j < nodeToRemove.connected_members[i].end_node.connected_members.length; j++) { //go to the end node of the member and delete the member from there
+                            if (nodeToRemove.connected_members[i].end_node.connected_members[j] === nodeToRemove.connected_members[i]) {
+                                nodeToRemove.connected_members[i].end_node.connected_members.splice(j, 1);
+                                break;
+                            }
+                        }
+                    } else { //if the connected members end node is the node to remove
+                        for (j = 0; j < nodeToRemove.connected_members[i].start_node.connected_members.length; j++) { //go to the start node of the member and delete the member from there
+                            if (nodeToRemove.connected_members[i].start_node.connected_members[j] === nodeToRemove.connected_members[i]) {
+                                nodeToRemove.connected_members[i].start_node.connected_members.splice(j, 1);
+                                break;
+                            }
+                        }
+                    }
+                    canvas.remove(nodeToRemove.connected_members[i]); //remove the connected member from the canvas
+                    membersToRemove.push(nodeToRemove.connected_members[i]);
+                }
+                canvas.remove(nodeToRemove); //remove the selected node from the canvas
 
+                for(i=0;i<EntityController.nodes.length;i++){ //removing the node from the enity controller
+                    if(EntityController.nodes[i]===nodeToRemove){
+                        EntityController.nodes.splice(i,1);
+                        break;
+                    }
+                }
+                for(i=0;i<EntityController.members.length;i++){ //removing the members from the entity controller
+                    for(j=0;j<membersToRemove.length;j++){
+                        if(membersToRemove[j]===EntityController.members[i]){
+                            EntityController.members.splice(i,1);
+                            // membersToRemove.splice(j,1);
+                        }
+                    }
+                }
+            }
+        }
     });
 
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
-        if (ModeController.mode === 'erase' && !ModeController.simulation) { //TODO: remove all connected members from the nodes as well
-            canvas.remove(event.target); //remove the selected node from the canvas
-        }
 
 
     });
 
-    var previous_fill = 'grey';
-    var hover_fill = 'red';
     canvas.on('mouse:over', function(e) {
         if (ModeController.mode === 'erase' && !ModeController.simulation) {
-            previous_fill = e.target.getFill();
-            e.target.setFill(hover_fill);
+            e.target.setFill(EntityController.erase_fill);
             canvas.renderAll();
         }
     });
 
     canvas.on('mouse:out', function(e) {
         if (ModeController.mode === 'erase' && !ModeController.simulation) {
-            e.target.setFill(previous_fill);
+            e.target.setFill(EntityController.node_fill);
             canvas.renderAll();
         }
     });
@@ -112,7 +147,7 @@ module.exports = function(canvas, ModeController) {
     keyListener.tabIndex = 1000; //required to get the canvas wrapper register events with keys
     $(keyListener).keydown(function(event) {
         // console.log('key pressed was: '+event.which); // for debug
-        switch(event.which) {
+        switch (event.which) {
             case 27: //escape key
                 ModeController.move_mode();
                 break;
@@ -126,18 +161,17 @@ module.exports = function(canvas, ModeController) {
                 ModeController.add_node_mode();
                 break;
         }
-    }); 
+    });
 
 
     $('#simulation-button').on('click', function() {
         ModeController.simulation_mode();
-        if(ModeController.simulation){
-           $('#simulation-button').html('Stop Simulation');
+        if (ModeController.simulation) {
+            $('#simulation-button').html('Stop Simulation');
             $("#add-node-button").attr("disabled", true);
             $("#add-member-button").attr("disabled", true);
             $("#eraser-button").attr("disabled", true);
-        }
-        else{
+        } else {
             $('#simulation-button').html('Start Simulation');
             $("#add-node-button").attr("disabled", false);
             $("#add-member-button").attr("disabled", false);

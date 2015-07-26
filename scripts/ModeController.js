@@ -52,6 +52,7 @@ var ModeController={
 			if (!EntityController.isValid()) { //if the bridge design is not valid
             	alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
                 'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
+                this.simulation=false;
 	        } else if (!EntityController.car) { //if the car object doesnt exist yet
 	            var car = new Car({
 	                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
