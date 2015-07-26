@@ -130,28 +130,7 @@ module.exports = function(canvas, ModeController) {
 
 
     $('#simulation-button').on('click', function() {
-        if (!EntityController.isValid()) { //if the bridge design is not valid
-            alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
-                'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
-        } else if (!EntityController.car) { //if the car object doesnt exist yet
-            var car = new Car({
-                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
-                height: Grid.grid_size,
-                left: 50,
-                top: canvas.getHeight() / 3 - 40,
-                label: 'Distributed Load',
-                length: EntityController.car_length,
-                weight: EntityController.car_weight
-            });
-            EntityController.car = car;
-            canvas.add(car);
-            Calculate();
-            ModeController.simulation=true;
-        } else { //if the car object already exists
-            Calculate();
-            ModeController.simulation=true;
-        }
-
+        ModeController.simulation_mode();
         return false;
     });
 };

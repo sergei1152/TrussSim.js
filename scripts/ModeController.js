@@ -2,7 +2,10 @@
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
 var Member=require('./Member');
-
+var EntityController = require('./EntityController.js');
+var Calculate=require('./Calculate');
+var Car=require('./Car');
+var Grid=require('./Grid');
 //Controls the current mode
 var ModeController={
 	canvas: null,
@@ -39,6 +42,33 @@ var ModeController={
 		this.clearMember();
 	},
 	move_mode:function(){
+		this.mode='move';
+		this.clearNode();
+		this.clearMember();
+	},
+	simulation_mode:function(){
+		this.simulation=!this.simulation;
+		if(this.simulation){
+			if (!EntityController.isValid()) { //if the bridge design is not valid
+            	alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
+                'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
+	        } else if (!EntityController.car) { //if the car object doesnt exist yet
+	            var car = new Car({
+	                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
+	                height: Grid.grid_size,
+	                left: 50,
+	                top: Grid.canvas.getHeight() / 3 - 40,
+	                label: 'Distributed Load',
+	                length: EntityController.car_length,
+	                weight: EntityController.car_weight
+	            });
+	            EntityController.car = car;
+	            Grid.canvas.add(car);
+	            Calculate();
+	        } else { //if the car object already exists
+	            Calculate();
+	        }
+		}
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();

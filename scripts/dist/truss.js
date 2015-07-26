@@ -267,6 +267,9 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //color stuff
+    erase_fill: '#E43A3A',
+    node_fill: '#FFFFFF',
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
@@ -735,28 +738,7 @@ module.exports = function(canvas, ModeController) {
 
 
     $('#simulation-button').on('click', function() {
-        if (!EntityController.isValid()) { //if the bridge design is not valid
-            alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
-                'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
-        } else if (!EntityController.car) { //if the car object doesnt exist yet
-            var car = new Car({
-                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
-                height: Grid.grid_size,
-                left: 50,
-                top: canvas.getHeight() / 3 - 40,
-                label: 'Distributed Load',
-                length: EntityController.car_length,
-                weight: EntityController.car_weight
-            });
-            EntityController.car = car;
-            canvas.add(car);
-            Calculate();
-            ModeController.simulation=true;
-        } else { //if the car object already exists
-            Calculate();
-            ModeController.simulation=true;
-        }
-
+        ModeController.simulation_mode();
         return false;
     });
 };
@@ -903,7 +885,10 @@ Member.prototype.setForce=function(x){
 //TODO: Set cursors based on what mode is selected
 var Node=require('./Node');
 var Member=require('./Member');
-
+var EntityController = require('./EntityController.js');
+var Calculate=require('./Calculate');
+var Car=require('./Car');
+var Grid=require('./Grid');
 //Controls the current mode
 var ModeController={
 	canvas: null,
@@ -944,6 +929,33 @@ var ModeController={
 		this.clearNode();
 		this.clearMember();
 	},
+	simulation_mode:function(){
+		this.simulation=!this.simulation;
+		if(this.simulation){
+			if (!EntityController.isValid()) { //if the bridge design is not valid
+            	alert('The bridge design is not valid and does not satisfy the M=2N-3 condition' +
+                'You have ' + EntityController.nodes.length + ' nodes and ' + EntityController.members.length + ' members');
+	        } else if (!EntityController.car) { //if the car object doesnt exist yet
+	            var car = new Car({
+	                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
+	                height: Grid.grid_size,
+	                left: 50,
+	                top: Grid.canvas.getHeight() / 3 - 40,
+	                label: 'Distributed Load',
+	                length: EntityController.car_length,
+	                weight: EntityController.car_weight
+	            });
+	            EntityController.car = car;
+	            Grid.canvas.add(car);
+	            Calculate();
+	        } else { //if the car object already exists
+	            Calculate();
+	        }
+		}
+		this.mode='move';
+		this.clearNode();
+		this.clearMember();
+	},
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
 
@@ -980,8 +992,7 @@ $('#add-node-button').on('click',function() {
 
 module.exports=ModeController;
 
-},{"./Member":8,"./Node":10}],10:[function(require,module,exports){
-
+},{"./Calculate":1,"./Car":2,"./EntityController.js":3,"./Grid":5,"./Member":8,"./Node":10}],10:[function(require,module,exports){
 var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {

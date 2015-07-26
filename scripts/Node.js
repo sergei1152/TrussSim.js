@@ -1,4 +1,3 @@
-
 var ForceLine=require('./ForceLine');
 
 var Node = fabric.util.createClass(fabric.Circle, {

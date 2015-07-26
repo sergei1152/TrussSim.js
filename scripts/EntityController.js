@@ -21,6 +21,9 @@ var EntityController = {
     members: [],
     floor_nodes: [],
 
+    //color stuff
+    erase_fill: '#E43A3A',
+    node_fill: '#FFFFFF',
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
