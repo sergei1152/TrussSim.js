@@ -111,10 +111,23 @@ var EntityController = {
         }
         exportObj.nodestr = nodeStr;
 
+        //do rounding on x's and y's
         for (var i in impProp) {
             exportObj[impProp[i]] = this[impProp[i]];
+            //the following is for rounding the numbers, but it breaks the calculations in the matrix somehow
+            // if (impProp[i] == "nodes")
+            //     for (var o in this[impProp[i]]) {
+            //         exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
+            //         exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
+            //     }
+            // if (impProp[i] == "members")
+            //     for (j in this[impProp[i]]) {
+            //         exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
+            //         exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
+            //         exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
+            //         exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
+            //     }                
         }
-
         return exportObj;
     },
     //recreate everything on the canvas from the entity controller
@@ -139,7 +152,6 @@ var EntityController = {
             }
             if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
-                // console.log('floorBeam');
             }
             //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
             if ((+i+1) < jsonObj.num_nodes)

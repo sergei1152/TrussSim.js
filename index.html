@@ -17,53 +17,54 @@
 		</nav>
 		
 		<header>
-					<form class='form-inline' action="" nosubmit>
-						<div class="form-group">
-							<label for="bridge-length">Bridge Length (m)</label>
-							<input type="text" class="form-control" id='bridge-length-input' name="bridge-length" placeholder="Default: 15m">
-						</div>
-						<div class="form-group">
-							<label for="car-weight">Car Weight (kN)</label>
-							<input type="text"  class="form-control" id="car-weight-input" name="car-weight" placeholder="Default: 7.5kN">
-						</div>
-						<div class="form-group">
-							<label for="car-length">Car Length (m)</label>
-							<input type="text" class="form-control" id="car-length-input" name="car-length" placeholder="Default: 6m">
-						</div>
-						
-						<div class="form-group">
-							<label for="max-compressive">Max Compressive Force (kN)</label>
-							<input type="text" class="form-control"  id="max-compressive-input" name="max-compressive" placeholder="Default: 8kN">
-						</div>
-						<div class="form-group">
-							<label for="max-tensile">Max Tensile Force (kN)</label>
-							<input type="text" class="form-control"  id="max-tensile-input" name="max-tensile" placeholder="Default: 12kN">
-						</div>
+			<form class='form-inline' action="" nosubmit>
+				<div class="form-group">
+					<label for="bridge-length">Bridge Length (m)</label>
+					<input type="text" class="form-control" id='bridge-length-input' name="bridge-length" placeholder="Default: 15m">
+				</div>
+				<div class="form-group">
+					<label for="car-weight">Car Weight (kN)</label>
+					<input type="text"  class="form-control" id="car-weight-input" name="car-weight" placeholder="Default: 7.5kN">
+				</div>
+				<div class="form-group">
+					<label for="car-length">Car Length (m)</label>
+					<input type="text" class="form-control" id="car-length-input" name="car-length" placeholder="Default: 6m">
+				</div>
+				
+				<div class="form-group">
+					<label for="max-compressive">Max Compressive Force (kN)</label>
+					<input type="text" class="form-control"  id="max-compressive-input" name="max-compressive" placeholder="Default: 8kN">
+				</div>
+				<div class="form-group">
+					<label for="max-tensile">Max Tensile Force (kN)</label>
+					<input type="text" class="form-control"  id="max-tensile-input" name="max-tensile" placeholder="Default: 12kN">
+				</div>
 
-						<div class="form-group">
-							<label for="grid-spacing">Grid Spacing (px)</label>
-							<input type="text" class="form-control" id='grid-size-input' ame="grid-spacing" placeholder="Default: 50px">
-						</div>
+				<div class="form-group">
+					<label for="grid-spacing">Grid Spacing (px)</label>
+					<input type="text" class="form-control" id='grid-size-input' ame="grid-spacing" placeholder="Default: 50px">
+				</div>
 
-						<div class="form-group">
-							<label for="num-floor">Number of Floor Nodes</label>
-							<input type="text" class="form-control"  id='num-floor-input'  name="num-floor" placeholder="Default: 6">
-						</div>
-					</form>
+				<div class="form-group">
+					<label for="num-floor">Number of Floor Nodes</label>
+					<input type="text" class="form-control"  id='num-floor-input'  name="num-floor" placeholder="Default: 6">
+				</div>
+			</form>
 
-						<div class="form-group">
-							<label for="export-cont">Export and Import</label>
-							<textarea class="form-control" id="export-cont" placeholder="Copy and paste here to import"></textarea>
-							<input type="text" class="form-control" id="uniqueHash" placeholder="Unique Generated Hash" readonly="true">
-							<button class="btn btn-success" id='exportBtn'>Export</button>
-							<button class="btn btn-primary" id='importBtn'>Import</button>
-						</div>
+			<div class="form-group">
+				<label for="export-cont">Export and Import</label>
+				<textarea class="form-control" id="export-cont" placeholder="Copy and paste here to import"></textarea>
+				<input type="text" class="form-control" id="uniqueHash" placeholder="Unique Generated Hash" readonly="true">
+				<button class="btn btn-success" id='exportBtn'>Export</button>
+				<button class="btn btn-primary" id='importBtn'>Import</button>
+			</div>
 						
 			<br>
 			<div class="menu-buttons">
 				<button class="btn btn-default" id='move-button'>Move</button>
 				<button class="btn btn-default" id='add-node-button'>Add Node</button>
 				<button class="btn btn-default" id='add-member-button'>Add Member</button>
+				<button class="btn btn-info" id='show-coords-button'>Display Coords</button>
 				<button class="btn btn-danger" id='eraser-button'>Eraser</button>
 				<button class="btn btn-primary" id='simulation-button'>Start Simulation</button>
 

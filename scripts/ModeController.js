@@ -13,7 +13,15 @@ var ModeController={
 	simulation: false,
 	new_node:null,
 	new_member: null,
+	show_node_coords: false,
 
+	showNodeCoords:function() {
+		this.show_node_coords = !this.show_node_coords;
+		for (var i in EntityController.nodes) {
+			EntityController.nodes[i].showCoords = this.show_node_coords;
+		}
+		Grid.canvas.renderAll();
+	},
 	setButtonStates:function() {
 		var modeId={
 			'move':'move-button', 
@@ -33,11 +41,17 @@ var ModeController={
 				}
 			}
 		}
-		//also set simulation button as active
+		//set simulation button as active
 		if (this.simulation) {
 			$('#simulation-button').addClass('active');
 		} else {
 			$('#simulation-button').removeClass('active');
+		}
+		//set node coord display button
+		if (this.show_node_coords) {
+			$('#show-coords-button').addClass('active');
+		} else {
+			$('#show-coords-button').removeClass('active');
 		}
 	},
 	//removes the currently unplaced node from the canvas
@@ -147,6 +161,9 @@ $('#add-member-button').on('click',function() {
 });
 $('#add-node-button').on('click',function() {
 	ModeController.add_node_mode();
+});
+$('#show-coords-button').on('click',function() {
+	ModeController.showNodeCoords();
 });
 
 module.exports=ModeController;

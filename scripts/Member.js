@@ -45,9 +45,13 @@ var Member = fabric.util.createClass(fabric.Line, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-        ctx.font = '20px Arial';
-        ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
-        ctx.fillText(this.label, 0,20);
+        if (this.force !== null) {
+            ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            ctx.fillRect(-10, -8, 80, 28);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+            ctx.fillText(this.label, 0,20);
+        }
     }
 });
 
@@ -73,13 +77,13 @@ Member.prototype.copyProp=function(memberObj) {
 };
 
 Member.prototype.isStartNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x1) && Math.round(nodeObj.top) == Math.round(this.y1))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x1*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y1*100)/100)
         return true;
     return false;
 };
 
 Member.prototype.isEndNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x2) && Math.round(nodeObj.top) == Math.round(this.y2))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x2*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y2*100)/100)
         return true;
     return false;
 };

@@ -12,6 +12,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
         //settings default values of the most important properties
         this.set({
+            showCoords: false,
             left: options.left || -100,
             top: options.top || -100,
             strokeWidth: options.strokeWidth || 5,
@@ -27,7 +28,6 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
-
     
     toObject: function() {
         return {
@@ -40,6 +40,14 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        if (this.showCoords) {
+            ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            ctx.fillRect(-10, 12, 150, 22);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
+            console.log(ctx);
+        }
     }
 });
 
@@ -48,7 +56,7 @@ Node.prototype.copyProp=function(nodeObj) {
     this.left = nodeObj.left;
     this.support = nodeObj.support;
     this.floor_beam = nodeObj.floor_beam;
-    if (this.support) {
+    if (this.floor_beam) {
         this.lockMovementY = true;
     } else {
         this.lockMovementY = false;

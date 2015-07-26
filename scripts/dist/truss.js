@@ -145,6 +145,7 @@ function methodOfJoints(){
 			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
 				if(E.members[j]===E.nodes[i].connected_members[k]){
 					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
+					// if(Math.round(E.nodes[i].connected_members[k].x1*100)/100===Math.round(E.nodes[i].left*100)/100 && Math.round(E.nodes[i].connected_members[k].y1*100)/100===Math.round(E.nodes[i].top*100)/100){
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
 					}
@@ -356,10 +357,23 @@ var EntityController = {
         }
         exportObj.nodestr = nodeStr;
 
+        //do rounding on x's and y's
         for (var i in impProp) {
             exportObj[impProp[i]] = this[impProp[i]];
+            //the following is for rounding the numbers, but it breaks the calculations in the matrix somehow
+            // if (impProp[i] == "nodes")
+            //     for (var o in this[impProp[i]]) {
+            //         exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
+            //         exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
+            //     }
+            // if (impProp[i] == "members")
+            //     for (j in this[impProp[i]]) {
+            //         exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
+            //         exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
+            //         exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
+            //         exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
+            //     }                
         }
-
         return exportObj;
     },
     //recreate everything on the canvas from the entity controller
@@ -384,7 +398,6 @@ var EntityController = {
             }
             if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
-                // console.log('floorBeam');
             }
             //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
             if ((+i+1) < jsonObj.num_nodes)
@@ -935,9 +948,13 @@ var Member = fabric.util.createClass(fabric.Line, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-        ctx.font = '20px Arial';
-        ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
-        ctx.fillText(this.label, 0,20);
+        if (this.force !== null) {
+            ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            ctx.fillRect(-10, -8, 80, 28);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+            ctx.fillText(this.label, 0,20);
+        }
     }
 });
 
@@ -963,13 +980,13 @@ Member.prototype.copyProp=function(memberObj) {
 };
 
 Member.prototype.isStartNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x1) && Math.round(nodeObj.top) == Math.round(this.y1))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x1*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y1*100)/100)
         return true;
     return false;
 };
 
 Member.prototype.isEndNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x2) && Math.round(nodeObj.top) == Math.round(this.y2))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x2*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y2*100)/100)
         return true;
     return false;
 };
@@ -1020,7 +1037,15 @@ var ModeController={
 	simulation: false,
 	new_node:null,
 	new_member: null,
+	show_node_coords: false,
 
+	showNodeCoords:function() {
+		this.show_node_coords = !this.show_node_coords;
+		for (var i in EntityController.nodes) {
+			EntityController.nodes[i].showCoords = this.show_node_coords;
+		}
+		Grid.canvas.renderAll();
+	},
 	setButtonStates:function() {
 		var modeId={
 			'move':'move-button', 
@@ -1040,11 +1065,17 @@ var ModeController={
 				}
 			}
 		}
-		//also set simulation button as active
+		//set simulation button as active
 		if (this.simulation) {
 			$('#simulation-button').addClass('active');
 		} else {
 			$('#simulation-button').removeClass('active');
+		}
+		//set node coord display button
+		if (this.show_node_coords) {
+			$('#show-coords-button').addClass('active');
+		} else {
+			$('#show-coords-button').removeClass('active');
 		}
 	},
 	//removes the currently unplaced node from the canvas
@@ -1155,6 +1186,9 @@ $('#add-member-button').on('click',function() {
 $('#add-node-button').on('click',function() {
 	ModeController.add_node_mode();
 });
+$('#show-coords-button').on('click',function() {
+	ModeController.showNodeCoords();
+});
 
 module.exports=ModeController;
 
@@ -1173,6 +1207,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
         //settings default values of the most important properties
         this.set({
+            showCoords: false,
             left: options.left || -100,
             top: options.top || -100,
             strokeWidth: options.strokeWidth || 5,
@@ -1188,7 +1223,6 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
-
     
     toObject: function() {
         return {
@@ -1201,6 +1235,14 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        if (this.showCoords) {
+            ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            ctx.fillRect(-10, 12, 150, 22);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
+            console.log(ctx);
+        }
     }
 });
 
@@ -1209,7 +1251,7 @@ Node.prototype.copyProp=function(nodeObj) {
     this.left = nodeObj.left;
     this.support = nodeObj.support;
     this.floor_beam = nodeObj.floor_beam;
-    if (this.support) {
+    if (this.floor_beam) {
         this.lockMovementY = true;
     } else {
         this.lockMovementY = false;
@@ -1339,8 +1381,4 @@ module.exports=ResizeController;
   EntityController.createFloorNodes(num_floor_beams);
 
   ModeController.move_mode();
-
-
-
-
 },{"./EntityController":3,"./Grid":5,"./InputController":6,"./InteractionController":7,"./ModeController":9,"./Node":10,"./ResizeController":11}]},{},[12]);

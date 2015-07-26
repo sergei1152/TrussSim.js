@@ -144,6 +144,7 @@ function methodOfJoints(){
 			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
 				if(E.members[j]===E.nodes[i].connected_members[k]){
 					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
+					// if(Math.round(E.nodes[i].connected_members[k].x1*100)/100===Math.round(E.nodes[i].left*100)/100 && Math.round(E.nodes[i].connected_members[k].y1*100)/100===Math.round(E.nodes[i].top*100)/100){
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
 					}
