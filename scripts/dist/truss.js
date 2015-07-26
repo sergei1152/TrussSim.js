@@ -1048,6 +1048,12 @@ var ModeController={
 	new_member: null,
 	show_node_coords: false,
 
+	carToMiddle:function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
+		Calculate();
+		Grid.canvas.renderAll();
+	},
 	showNodeCoords:function() {
 		this.show_node_coords = !this.show_node_coords;
 		for (var i in EntityController.nodes) {
@@ -1062,13 +1068,13 @@ var ModeController={
 	},
 	updateNodeDistance: function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
-		var text = "";
+		var text = "• ";
 		for (var i in EntityController.floor_nodes) {
 			if (i > 0) {
-					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ', ';
+					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ' • ';
 			}
 		}
-		
+
 		$('#floorNodeDist').text(text);
 	},
 	setButtonStates:function() {
@@ -1093,8 +1099,10 @@ var ModeController={
 		//set simulation button as active
 		if (this.simulation) {
 			$('#simulation-button').addClass('active');
+			$('#middle-position-button').removeClass('disabled');
 		} else {
 			$('#simulation-button').removeClass('active');
+			$('#middle-position-button').addClass('disabled');
 		}
 		//set node coord display button
 		if (this.show_node_coords) {
@@ -1213,6 +1221,9 @@ $('#add-node-button').on('click',function() {
 });
 $('#show-coords-button').on('click',function() {
 	ModeController.showNodeCoords();
+});
+$('#middle-position-button').on('click', function() {
+	ModeController.carToMiddle();
 });
 
 module.exports=ModeController;
