@@ -179,7 +179,10 @@ function methodOfJoints(){
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
-		if((forces[i]>0 && forces[i]>E.max_tensile) || (forces[i]<0 && -1*forces[i]>E.max_compressive)){ //check if the design passes the test
+		if(forces[i]>0 && forces[i]>E.max_tensile){
+			E.designPass=false;
+		}
+		else if(forces[i]<0 && Math.abs(forces[i])>E.max_compressive){
 			E.designPass=false;
 		}
 		else{
@@ -1147,10 +1150,12 @@ Node.prototype.moveMembers = function(canvas) {
                 y2: this.top
             });
         }
-        //Re-adding the members to avoing weird glitchiness
-        canvas.remove(this.connected_members[i]);
-        canvas.add(this.connected_members[i]);
-        canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
+        //Re-adding the members to avoing weird glitchiness (if canvas object available)
+        if(canvas){
+            canvas.remove(this.connected_members[i]);
+            canvas.add(this.connected_members[i]);
+            canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
+        }
     }
 };
 
@@ -1227,36 +1232,36 @@ var Optimizer={
 			for(i=0;i<non_floor_nodes.length;i++){
 				//randomizing position of all floor nodes
 				if(Math.round(Math.random)===1){
-					non_floor_nodes[i].set({left:starting_positions[i][0]+this.variation*Math.random()});
+					non_floor_nodes[i].left=starting_positions[i][0]+this.variation*Math.random();
 					if(Math.round(Math.random())===1){
-						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]+this.variation*Math.random();
 					}
 					else{
-						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
 				else{
-					non_floor_nodes[i].set({left:starting_positions[i][0]-this.variation*Math.random()});
+					non_floor_nodes[i].left=starting_positions[i][0]-this.variation*Math.random();
 					if(Math.round(Math.random())===1){
-						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]+this.variation*Math.random();
 					}
 					else{
-						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
-				Calculate();
-				console.log(EntityController.currentDesignCost);
-				if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
-					this.optimal_positions=[];
-					this.min_cost=EntityController.currentDesignCost;
-					for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
-						position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
-						this.optimal_positions.push(position);
-					}
-					console.log('Better design reached at '+this.iteration_number);
-				}
-				this.iteration_number++;
+				non_floor_nodes[i].moveMembers(null);
 			}
+				
+			Calculate();
+			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
+				this.optimal_positions=[];
+				this.min_cost=EntityController.currentDesignCost;
+				for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+					position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+					this.optimal_positions.push(position);
+				}
+			}
+			this.iteration_number++;
 		}
 		if(this.optimal_positions.length===0){
 			console.log('No solutions found after '+this.iteration_number+" iterations");

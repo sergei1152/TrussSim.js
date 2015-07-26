@@ -178,7 +178,10 @@ function methodOfJoints(){
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
-		if((forces[i]>0 && forces[i]>E.max_tensile) || (forces[i]<0 && -1*forces[i]>E.max_compressive)){ //check if the design passes the test
+		if(forces[i]>0 && forces[i]>E.max_tensile){
+			E.designPass=false;
+		}
+		else if(forces[i]<0 && Math.abs(forces[i])>E.max_compressive){
 			E.designPass=false;
 		}
 		else{

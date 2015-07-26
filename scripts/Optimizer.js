@@ -33,36 +33,36 @@ var Optimizer={
 			for(i=0;i<non_floor_nodes.length;i++){
 				//randomizing position of all floor nodes
 				if(Math.round(Math.random)===1){
-					non_floor_nodes[i].set({left:starting_positions[i][0]+this.variation*Math.random()});
+					non_floor_nodes[i].left=starting_positions[i][0]+this.variation*Math.random();
 					if(Math.round(Math.random())===1){
-						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]+this.variation*Math.random();
 					}
 					else{
-						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
 				else{
-					non_floor_nodes[i].set({left:starting_positions[i][0]-this.variation*Math.random()});
+					non_floor_nodes[i].left=starting_positions[i][0]-this.variation*Math.random();
 					if(Math.round(Math.random())===1){
-						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]+this.variation*Math.random();
 					}
 					else{
-						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
-				Calculate();
-				console.log(EntityController.currentDesignCost);
-				if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
-					this.optimal_positions=[];
-					this.min_cost=EntityController.currentDesignCost;
-					for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
-						position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
-						this.optimal_positions.push(position);
-					}
-					console.log('Better design reached at '+this.iteration_number);
-				}
-				this.iteration_number++;
+				non_floor_nodes[i].moveMembers(null);
 			}
+				
+			Calculate();
+			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
+				this.optimal_positions=[];
+				this.min_cost=EntityController.currentDesignCost;
+				for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+					position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+					this.optimal_positions.push(position);
+				}
+			}
+			this.iteration_number++;
 		}
 		if(this.optimal_positions.length===0){
 			console.log('No solutions found after '+this.iteration_number+" iterations");

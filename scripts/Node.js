@@ -75,10 +75,12 @@ Node.prototype.moveMembers = function(canvas) {
                 y2: this.top
             });
         }
-        //Re-adding the members to avoing weird glitchiness
-        canvas.remove(this.connected_members[i]);
-        canvas.add(this.connected_members[i]);
-        canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
+        //Re-adding the members to avoing weird glitchiness (if canvas object available)
+        if(canvas){
+            canvas.remove(this.connected_members[i]);
+            canvas.add(this.connected_members[i]);
+            canvas.sendToBack(this.connected_members[i]); //sending the connected members to the back of the canvas
+        }
     }
 };
 
