@@ -210,7 +210,8 @@ var EntityController = {
           left: canvasWidth/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         var supportB=new Node({
           support: true,
@@ -218,7 +219,8 @@ var EntityController = {
           left: canvasWidth*7/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         this.supportA=supportA;
         this.supportB=supportB;

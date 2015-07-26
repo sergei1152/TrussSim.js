@@ -68,8 +68,10 @@ Node.prototype.copyProp=function(nodeObj) {
     }
     if (this.support) {
         this.stroke = '#F41313';
+        this.lockMovementX=true;
     } else if (this.floor_beam) {
         this.stroke = '#000000';
+        this.lockMovementX=false;
     } //else default
 };
 

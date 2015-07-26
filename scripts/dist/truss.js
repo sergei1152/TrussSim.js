@@ -456,7 +456,8 @@ var EntityController = {
           left: canvasWidth/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         var supportB=new Node({
           support: true,
@@ -464,7 +465,8 @@ var EntityController = {
           left: canvasWidth*7/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         this.supportA=supportA;
         this.supportB=supportB;
@@ -746,6 +748,9 @@ module.exports = function(canvas, ModeController) {
 
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
+        if (ModeController.show_node_coords) {
+            ModeController.updateNodeDistance();
+        }
         if (ModeController.mode === 'add_node' && !ModeController.simulation) {
             canvas.remove(ModeController.new_node); //for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
@@ -860,6 +865,25 @@ module.exports = function(canvas, ModeController) {
             var node = event.target;
             if(node.floor_beam && ModeController.show_node_coords) {
                     ModeController.updateNodeDistance();
+            }
+            //only allow node to have a separation distance of 3m between its neighbour
+            if (node.floor_beam && !node.support) {
+                //find out the index of the node in the floor_nodes array
+                var index;
+                for (index in EntityController.floor_nodes) {
+                    if (EntityController.floor_nodes[index].left == node.left) {
+                        break;
+                    }
+                }
+                var left, right, gridMeter;
+                gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+                left = (node.left - EntityController.floor_nodes[index-1].left)/gridMeter;
+                right = (EntityController.floor_nodes[+index+1].left - node.left)/gridMeter;
+                if (left > 3) {
+                    node.left = EntityController.floor_nodes[+index-1].left+3*gridMeter;
+                } else if (right > 3) {
+                    node.left = EntityController.floor_nodes[+index+1].left-3*gridMeter;
+                }
             }
             node.moveMembers(canvas);
             if (ModeController.simulation) {
@@ -1299,8 +1323,10 @@ Node.prototype.copyProp=function(nodeObj) {
     }
     if (this.support) {
         this.stroke = '#F41313';
+        this.lockMovementX=true;
     } else if (this.floor_beam) {
         this.stroke = '#000000';
+        this.lockMovementX=false;
     } //else default
 };
 
