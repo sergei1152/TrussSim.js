@@ -20,7 +20,23 @@ var ModeController={
 		for (var i in EntityController.nodes) {
 			EntityController.nodes[i].showCoords = this.show_node_coords;
 		}
+		if (this.show_node_coords) {
+			this.updateNodeDistance();
+		} else {
+			$('#floorNodeDist').text('');
+		}
 		Grid.canvas.renderAll();
+	},
+	updateNodeDistance: function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		var text = "";
+		for (var i in EntityController.floor_nodes) {
+			if (i > 0) {
+					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ', ';
+			}
+		}
+		
+		$('#floorNodeDist').text(text);
 	},
 	setButtonStates:function() {
 		var modeId={

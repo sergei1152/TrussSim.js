@@ -122,7 +122,6 @@ module.exports = function(canvas, ModeController) {
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
 
-
     });
 
     canvas.on('mouse:over', function(e) {
@@ -142,6 +141,9 @@ module.exports = function(canvas, ModeController) {
     canvas.on('object:moving', function(event) {
         if (event.target.type == 'node') { //if a node is moving
             var node = event.target;
+            if(node.floor_beam && ModeController.show_node_coords) {
+                    ModeController.updateNodeDistance();
+            }
             node.moveMembers(canvas);
             if (ModeController.simulation) {
                 Calculate();

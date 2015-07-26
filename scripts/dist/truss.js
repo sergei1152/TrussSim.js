@@ -353,7 +353,7 @@ var EntityController = {
         //added extra info to quickly get important information
         for (var j in this.nodes) {
             if (!this.nodes[j].floor_beam)
-                nodeStr += "("+(Math.round(this.nodes[j].left*100)/100)+", "+(Math.round(this.nodes[j].top*100)/100)+"), ";
+                nodeStr += "("+(Math.round((this.nodes[j].left-this.supportA.left)*100)/100)+", "+(Math.round((this.nodes[j].top-this.supportA.top)*100)/100)+"), ";
         }
         exportObj.nodestr = nodeStr;
 
@@ -839,7 +839,6 @@ module.exports = function(canvas, ModeController) {
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
 
-
     });
 
     canvas.on('mouse:over', function(e) {
@@ -859,6 +858,9 @@ module.exports = function(canvas, ModeController) {
     canvas.on('object:moving', function(event) {
         if (event.target.type == 'node') { //if a node is moving
             var node = event.target;
+            if(node.floor_beam && ModeController.show_node_coords) {
+                    ModeController.updateNodeDistance();
+            }
             node.moveMembers(canvas);
             if (ModeController.simulation) {
                 Calculate();
@@ -1051,7 +1053,23 @@ var ModeController={
 		for (var i in EntityController.nodes) {
 			EntityController.nodes[i].showCoords = this.show_node_coords;
 		}
+		if (this.show_node_coords) {
+			this.updateNodeDistance();
+		} else {
+			$('#floorNodeDist').text('');
+		}
 		Grid.canvas.renderAll();
+	},
+	updateNodeDistance: function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		var text = "";
+		for (var i in EntityController.floor_nodes) {
+			if (i > 0) {
+					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ', ';
+			}
+		}
+		
+		$('#floorNodeDist').text(text);
 	},
 	setButtonStates:function() {
 		var modeId={

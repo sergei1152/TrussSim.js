@@ -107,7 +107,7 @@ var EntityController = {
         //added extra info to quickly get important information
         for (var j in this.nodes) {
             if (!this.nodes[j].floor_beam)
-                nodeStr += "("+(Math.round(this.nodes[j].left*100)/100)+", "+(Math.round(this.nodes[j].top*100)/100)+"), ";
+                nodeStr += "("+(Math.round((this.nodes[j].left-this.supportA.left)*100)/100)+", "+(Math.round((this.nodes[j].top-this.supportA.top)*100)/100)+"), ";
         }
         exportObj.nodestr = nodeStr;
 
