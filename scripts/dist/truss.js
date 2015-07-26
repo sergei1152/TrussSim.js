@@ -360,19 +360,18 @@ var EntityController = {
         //do rounding on x's and y's
         for (var i in impProp) {
             exportObj[impProp[i]] = this[impProp[i]];
-            //the following is for rounding the numbers, but it breaks the calculations in the matrix somehow
-            // if (impProp[i] == "nodes")
-            //     for (var o in this[impProp[i]]) {
-            //         exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
-            //         exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
-            //     }
-            // if (impProp[i] == "members")
-            //     for (j in this[impProp[i]]) {
-            //         exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
-            //         exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
-            //         exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
-            //         exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
-            //     }                
+            if (impProp[i] == "nodes")
+                for (var o in this[impProp[i]]) {
+                    exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
+                    exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
+                }
+            if (impProp[i] == "members")
+                for (j in this[impProp[i]]) {
+                    exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
+                    exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
+                    exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
+                    exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
+                }                
         }
         return exportObj;
     },
@@ -382,6 +381,8 @@ var EntityController = {
         this.clearAllNodes();
         //create initial nodes
         for (var i in jsonObj.nodes) {
+            if(jsonObj.nodes[i].floor_beam) {
+            }
             node = new Node();
             node.copyProp(jsonObj.nodes[i]);
             this.addNode(node);
@@ -399,12 +400,8 @@ var EntityController = {
             if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
             }
-            //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
-            if ((+i+1) < jsonObj.num_nodes)
-                if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
-                    this.floor_nodes.push(this.supportB);
-            }
         }
+        this.floor_nodes.push(this.supportB);
 
         for (var o in jsonObj.members) {
             member = new Member();
@@ -782,7 +779,6 @@ module.exports = function(canvas, ModeController) {
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
                     if(event.e.shiftKey) {
-                        console.log('shift');  
                         ModeController.new_member.set({ //position the start of the member to be at the center of the node
                             x1: event.target.left,
                             y1: event.target.top,
@@ -1246,12 +1242,18 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        var yOff;
+        if (this.floor_beam) {
+            yOff = -30;
+        } else {
+            yOff = 12;
+        }
         if (this.showCoords) {
             ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            ctx.fillRect(-10, 12, 150, 22);
+            ctx.fillRect(-10, yOff, 150, 22);
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
-            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
         }
     }
 });

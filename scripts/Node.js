@@ -40,12 +40,18 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        var yOff;
+        if (this.floor_beam) {
+            yOff = -30;
+        } else {
+            yOff = 12;
+        }
         if (this.showCoords) {
             ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            ctx.fillRect(-10, 12, 150, 22);
+            ctx.fillRect(-10, yOff, 150, 22);
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
-            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
         }
     }
 });
