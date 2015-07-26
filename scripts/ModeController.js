@@ -66,9 +66,20 @@ var ModeController={
 	            Grid.canvas.add(car);
 	            Calculate();
 	        } else { //if the car object already exists
+	        	Grid.canvas.add(EntityController.car);
 	            Calculate();
 	        }
 		}
+		else{ //if exiting simulation mode
+			Grid.canvas.remove(EntityController.car);
+			for(var i=0;i<EntityController.members.length;i++){ //setting all the labels to 0
+				EntityController.members[i].setForce(0);
+			}
+			for(var j=0;j<EntityController.floor_nodes.length;j++){
+				EntityController.floor_nodes[j].setForce(0,0,Grid.canvas);
+			}
+		}
+		Grid.canvas.renderAll();
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();

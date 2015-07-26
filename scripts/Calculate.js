@@ -74,7 +74,6 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 			else if ((E.car.left-E.car_length_px/2)>E.floor_nodes[i-1].left && (E.car.left+E.car_length_px/2)<E.floor_nodes[i].left){ //if the car is on the left member but not on top of any nodes (if the cars tail is ahead of the left nodes position and the cars front is behind the current nodes position)
 				x=E.car.left-E.floor_nodes[i-1].left;
 				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
-				console.log(x*E.car_weight/leftDistance);
 				E.floor_nodes[i].setForce(0, E.floor_nodes[i].external_force[1]-x*E.car_weight/leftDistance, Grid.canvas);
 			}
 		}

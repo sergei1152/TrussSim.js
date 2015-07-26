@@ -131,6 +131,6 @@ Member.prototype.setForce=function(x){
     else{
         this.stroke='hsla(243, 0%,50%, 1)';
     }
-    this.label=Math.round(x*100)/100;
+    this.label=Math.round(x*100)/100 || '';
 };
 
