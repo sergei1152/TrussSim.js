@@ -24,6 +24,11 @@ var EntityController = {
     //color stuff
     erase_fill: '#E43A3A',
     node_fill: '#FFFFFF',
+
+    //for optimizer stuff
+    designPass: false,
+    currentDesignCost: 10E12,
+    
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything

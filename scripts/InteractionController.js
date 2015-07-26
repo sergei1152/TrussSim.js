@@ -4,6 +4,7 @@ var Car = require('./Car');
 var Grid = require('./Grid');
 var EntityController = require('./EntityController');
 var Calculate = require('./Calculate');
+var Optimizer=require('./Optimizer');
 
 module.exports = function(canvas, ModeController) {
 
@@ -163,6 +164,11 @@ module.exports = function(canvas, ModeController) {
         }
     });
 
+    $('#optimize-button').on('click', function() {
+        if(ModeController.simulation){
+            Optimizer.optimize();
+        }
+    });
 
     $('#simulation-button').on('click', function() {
         ModeController.simulation_mode();
@@ -171,11 +177,13 @@ module.exports = function(canvas, ModeController) {
             $("#add-node-button").attr("disabled", true);
             $("#add-member-button").attr("disabled", true);
             $("#eraser-button").attr("disabled", true);
+             $("#optimize-button").attr("disabled", false);
         } else {
             $('#simulation-button').html('Start Simulation');
             $("#add-node-button").attr("disabled", false);
             $("#add-member-button").attr("disabled", false);
             $("#eraser-button").attr("disabled", false);
+            $("#optimize-button").attr("disabled", true);
         }
 
         return false;

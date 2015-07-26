@@ -178,6 +178,12 @@ function methodOfJoints(){
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
+		if((forces[i]>0 && forces[i]>E.max_tensile) || (forces[i]<0 && -1*forces[i]>E.max_compressive)){ //check if the design passes the test
+			E.designPass=false;
+		}
+		else{
+			E.designPass=true;
+		}
 	}
 }
 
@@ -189,7 +195,7 @@ function calculateCost(){
 	}
 
 	bridge_cost+=E.nodes.length*E.node_cost;
-
+	E.currentDesignCost=Math.round(bridge_cost*100)/100;
 	return Math.round(bridge_cost*100)/100;
 }
 

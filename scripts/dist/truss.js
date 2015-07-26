@@ -179,6 +179,12 @@ function methodOfJoints(){
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
+		if((forces[i]>0 && forces[i]>E.max_tensile) || (forces[i]<0 && -1*forces[i]>E.max_compressive)){ //check if the design passes the test
+			E.designPass=false;
+		}
+		else{
+			E.designPass=true;
+		}
 	}
 }
 
@@ -190,7 +196,7 @@ function calculateCost(){
 	}
 
 	bridge_cost+=E.nodes.length*E.node_cost;
-
+	E.currentDesignCost=Math.round(bridge_cost*100)/100;
 	return Math.round(bridge_cost*100)/100;
 }
 
@@ -269,6 +275,11 @@ var EntityController = {
     //color stuff
     erase_fill: '#E43A3A',
     node_fill: '#FFFFFF',
+
+    //for optimizer stuff
+    designPass: false,
+    currentDesignCost: 10E12,
+    
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
@@ -611,6 +622,7 @@ var Car = require('./Car');
 var Grid = require('./Grid');
 var EntityController = require('./EntityController');
 var Calculate = require('./Calculate');
+var Optimizer=require('./Optimizer');
 
 module.exports = function(canvas, ModeController) {
 
@@ -770,6 +782,11 @@ module.exports = function(canvas, ModeController) {
         }
     });
 
+    $('#optimize-button').on('click', function() {
+        if(ModeController.simulation){
+            Optimizer.optimize();
+        }
+    });
 
     $('#simulation-button').on('click', function() {
         ModeController.simulation_mode();
@@ -778,17 +795,19 @@ module.exports = function(canvas, ModeController) {
             $("#add-node-button").attr("disabled", true);
             $("#add-member-button").attr("disabled", true);
             $("#eraser-button").attr("disabled", true);
+             $("#optimize-button").attr("disabled", false);
         } else {
             $('#simulation-button').html('Start Simulation');
             $("#add-node-button").attr("disabled", false);
             $("#add-member-button").attr("disabled", false);
             $("#eraser-button").attr("disabled", false);
+            $("#optimize-button").attr("disabled", true);
         }
 
         return false;
     });
 };
-},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":8,"./Node":10}],8:[function(require,module,exports){
+},{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":8,"./Node":10,"./Optimizer":11}],8:[function(require,module,exports){
 // var E=require('./EntityController');
 
 var Member = fabric.util.createClass(fabric.Line, {
@@ -1173,6 +1192,96 @@ Node.prototype.isCarOn=function(){
 
 
 },{"./EntityController":3,"./ForceLine":4}],11:[function(require,module,exports){
+var EntityController=require('./EntityController');
+var Calculate=require('./Calculate');
+var Grid=require('./Grid');
+var Optimizer={
+	variation: 100,
+	duration: 60,
+	min_cost: 10E12,
+	optimal_positions: [],
+	iteration_number: 0,
+
+	optimize: function(){ 
+		//reseting parameters
+		this.iteration_number=0;
+		this.optimal_positions=[];
+		this.min_cost=10E12;
+
+		var non_floor_nodes=[];
+		var starting_positions=[];
+		var i;
+		var position;
+		for(i=0;i<EntityController.nodes.length;i++){ //creating an array of the nodes that can be varied
+			if(!EntityController.nodes[i].floor_beam){
+				non_floor_nodes.push(EntityController.nodes[i]);
+			}
+		}
+		for(i=0;i<non_floor_nodes.length;i++){ //saving the starting positions of the floor nodes
+				 position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+				starting_positions.push(position);
+		}
+
+		var startTime=Date.now();
+		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
+			for(i=0;i<non_floor_nodes.length;i++){
+				//randomizing position of all floor nodes
+				if(Math.round(Math.random)===1){
+					non_floor_nodes[i].set({left:starting_positions[i][0]+this.variation*Math.random()});
+					if(Math.round(Math.random())===1){
+						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+					}
+					else{
+						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+					}
+				}
+				else{
+					non_floor_nodes[i].set({left:starting_positions[i][0]-this.variation*Math.random()});
+					if(Math.round(Math.random())===1){
+						non_floor_nodes[i].set({top:starting_positions[i][1]+this.variation*Math.random()});
+					}
+					else{
+						non_floor_nodes[i].set({top:starting_positions[i][1]-this.variation*Math.random()});
+					}
+				}
+				Calculate();
+				console.log(EntityController.currentDesignCost);
+				if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
+					this.optimal_positions=[];
+					this.min_cost=EntityController.currentDesignCost;
+					for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+						position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+						this.optimal_positions.push(position);
+					}
+					console.log('Better design reached at '+this.iteration_number);
+				}
+				this.iteration_number++;
+			}
+		}
+		if(this.optimal_positions.length===0){
+			console.log('No solutions found after '+this.iteration_number+" iterations");
+			alert('No solutions found after '+this.iteration_number+" iterations");
+		}
+		else{
+			for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+				non_floor_nodes[i].set({
+					left: this.optimal_positions[i][0],
+					top: this.optimal_positions[i][1]
+				});
+				Grid.canvas.remove(non_floor_nodes[i]);
+				Grid.canvas.add(non_floor_nodes[i]);
+				non_floor_nodes[i].moveMembers(Grid.canvas);
+				Grid.canvas.renderAll();
+			}
+			Calculate();
+			console.log('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
+			alert('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
+		}
+	}
+};
+
+module.exports=Optimizer;
+},{"./Calculate":1,"./EntityController":3,"./Grid":5}],12:[function(require,module,exports){
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -1199,7 +1308,7 @@ $(window).on('resize',function(){
 });
 
 module.exports=ResizeController;
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
   var ModeController = require('./ModeController');
   var InteractionController = require('./InteractionController');
   var Grid = require('./Grid');
@@ -1230,4 +1339,4 @@ module.exports=ResizeController;
 
 
 
-},{"./EntityController":3,"./Grid":5,"./InputController":6,"./InteractionController":7,"./ModeController":9,"./Node":10,"./ResizeController":11}]},{},[12]);
+},{"./EntityController":3,"./Grid":5,"./InputController":6,"./InteractionController":7,"./ModeController":9,"./Node":10,"./ResizeController":12}]},{},[13]);
