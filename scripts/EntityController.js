@@ -80,9 +80,6 @@ var EntityController = {
         for (var l in this.nodes) {
             Grid.canvas.bringToFront(this.nodes[l]); 
         }
-
-        console.log(this);
-
         Grid.canvas.renderAll();
 
     },

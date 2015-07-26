@@ -51,6 +51,11 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
 				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-x*x*E.car_weight/(2*E.car_length_px*rightDistance),Grid.canvas);
 			}
+			else if ((E.car.left+E.car_length_px/2)<E.floor_nodes[i+1].left && (E.car.left-E.car_length_px/2)>E.floor_nodes[i].left){ //if the car is on the right member but not on top of any nodes (if the tail of the car is ahead of the current node position and the front of the car is behind the right nodes position)
+				x=E.floor_nodes[i+1].left-E.car.left;
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				E.floor_nodes[i].setForce(0, E.floor_nodes[i].external_force[1]-x*E.car_weight/rightDistance, Grid.canvas);
+			}
 		}
 		else if(!E.floor_nodes[i+1]){ //if right support node
 			if(E.floor_nodes[i-1].isCarOn() && !E.floor_nodes[i].isCarOn()){ //if the car is only on the left member
@@ -66,6 +71,12 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 				x=E.floor_nodes[i].left-(E.car.left-E.car_length_px/2);
 				distanceLeft=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
 				E.floor_nodes[i].setForce(0,E.floor_nodes[i].external_force[1]-((distanceLeft-x/2)*x*E.car_weight)/(distanceLeft*E.car_length_px),Grid.canvas);
+			}
+			else if ((E.car.left-E.car_length_px/2)>E.floor_nodes[i-1].left && (E.car.left+E.car_length_px/2)<E.floor_nodes[i].left){ //if the car is on the left member but not on top of any nodes (if the cars tail is ahead of the left nodes position and the cars front is behind the current nodes position)
+				x=E.car.left-E.floor_nodes[i-1].left;
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				console.log(x*E.car_weight/leftDistance);
+				E.floor_nodes[i].setForce(0, E.floor_nodes[i].external_force[1]-x*E.car_weight/leftDistance, Grid.canvas);
 			}
 		}
 		else if(E.floor_nodes[i-1] && E.floor_nodes[i+1]){ //if a regular floor node
@@ -103,11 +114,15 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 				x2=E.floor_nodes[i+1].left-E.floor_nodes[i].left; //portion of car on right member (position of right node minus position of current node)
 				E.floor_nodes[i].setForce(0,-((x1/2+x2/2)*E.car_weight/E.car_length_px),Grid.canvas);
 			}
-			else if ((E.car.left+E.car_length_px/2)<E.floor_nodes[i+1].left){ //if the car is on the right member but not on top of any nodes
-				console.log('car is on right member');
+			else if ((E.car.left+E.car_length_px/2)<E.floor_nodes[i+1].left && (E.car.left-E.car_length_px/2)>E.floor_nodes[i].left){ //if the car is on the right member but not on top of any nodes (if the tail of the car is ahead of the current node position and the front of the car is behind the right nodes position)
+				x=E.floor_nodes[i+1].left-E.car.left;
+				rightDistance=E.floor_nodes[i+1].left-E.floor_nodes[i].left;
+				E.floor_nodes[i].setForce(0, -x*E.car_weight/rightDistance, Grid.canvas);
 			}
-			else if ((E.car.left-E.car_length_px/2)>E.floor_nodes[i-1].left){ //if the car is on the left member but not on top of any nodes
-				console.log('car is on left member');
+			else if ((E.car.left-E.car_length_px/2)>E.floor_nodes[i-1].left && (E.car.left+E.car_length_px/2)<E.floor_nodes[i].left){ //if the car is on the left member but not on top of any nodes (if the cars tail is ahead of the left nodes position and the cars front is behind the current nodes position)
+				x=E.car.left-E.floor_nodes[i-1].left;
+				leftDistance=E.floor_nodes[i].left-E.floor_nodes[i-1].left;
+				E.floor_nodes[i].setForce(0, -x*E.car_weight/leftDistance, Grid.canvas);
 			}
 			else{
 				E.floor_nodes[i].setForce(0,0,Grid.canvas);
@@ -311,9 +326,6 @@ var EntityController = {
         for (var l in this.nodes) {
             Grid.canvas.bringToFront(this.nodes[l]); 
         }
-
-        console.log(this);
-
         Grid.canvas.renderAll();
 
     },
