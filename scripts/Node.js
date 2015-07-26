@@ -46,7 +46,6 @@ var Node = fabric.util.createClass(fabric.Circle, {
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
             ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
-            console.log(ctx);
         }
     }
 });

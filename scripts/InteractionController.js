@@ -61,6 +61,17 @@ module.exports = function(canvas, ModeController) {
                     canvas.sendToBack(ModeController.new_member);
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    if(event.e.shiftKey) {
+                        console.log('shift');  
+                        ModeController.new_member.set({ //position the start of the member to be at the center of the node
+                            x1: event.target.left,
+                            y1: event.target.top,
+                            x2: event.target.left,
+                            y2: event.target.top
+                        });
+                        ModeController.new_member.start_node = event.target;
+                        event.target.connected_members.push(ModeController.new_member);
+                    }
                     canvas.add(ModeController.new_member);
                 }
             }

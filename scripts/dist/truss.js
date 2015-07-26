@@ -781,6 +781,17 @@ module.exports = function(canvas, ModeController) {
                     canvas.sendToBack(ModeController.new_member);
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    if(event.e.shiftKey) {
+                        console.log('shift');  
+                        ModeController.new_member.set({ //position the start of the member to be at the center of the node
+                            x1: event.target.left,
+                            y1: event.target.top,
+                            x2: event.target.left,
+                            y2: event.target.top
+                        });
+                        ModeController.new_member.start_node = event.target;
+                        event.target.connected_members.push(ModeController.new_member);
+                    }
                     canvas.add(ModeController.new_member);
                 }
             }
@@ -1241,7 +1252,6 @@ var Node = fabric.util.createClass(fabric.Circle, {
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
             ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', -10,30);
-            console.log(ctx);
         }
     }
 });
