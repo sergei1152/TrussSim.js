@@ -125,12 +125,12 @@ function methodOfJoints(){
 			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
 				if(E.members[j]===E.nodes[i].connected_members[k]){
 					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
-						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
-						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
-					}
-					else{ //flip the direction so all forces are tensile
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					else{ //flip the direction so all forces are tensile
+						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
 					}
 					connected=true;
 				}
@@ -855,22 +855,22 @@ module.exports=Member;
 Member.prototype.setForce=function(x){
     this.force=x;
     var percentMax;
-    if(x>0){ //if the force is compressive
-        percentMax=x*100/this.max_compressive;
+    if(x<0){ //if the force is compressive
+        percentMax=-x*100/this.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(243, '+(percentMax*0.3+70)+'%,50%, 1)';
+            this.stroke='hsla(360, '+(percentMax*0.3+70)+'%,50%, 1)';
         }
     }
-    else if(x<0){ //if the force is tensile
-        percentMax=-x*100/this.max_tensile;
+    else if(x>0){ //if the force is tensile
+        percentMax=x*100/this.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(360, '+(percentMax*0.3+70)+'%,50%, 1)';
+            this.stroke='hsla(243, '+(percentMax*0.3+70)+'%,50%, 1)';
         }
     }
     else{

@@ -124,12 +124,12 @@ function methodOfJoints(){
 			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
 				if(E.members[j]===E.nodes[i].connected_members[k]){
 					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
-						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
-						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
-					}
-					else{ //flip the direction so all forces are tensile
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
+					}
+					else{ //flip the direction so all forces are tensile
+						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
+						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
 					}
 					connected=true;
 				}
