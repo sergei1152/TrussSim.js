@@ -148,7 +148,7 @@ module.exports = function(canvas, ModeController) {
                     ModeController.updateNodeDistance();
             }
             //only allow node to have a separation distance of 3m between its neighbour
-            if (node.floor_beam && !node.support) {
+            if (ModeController.max_spacing && node.floor_beam && !node.support) {
                 //find out the index of the node in the floor_nodes array
                 var index;
                 for (index in EntityController.floor_nodes) {

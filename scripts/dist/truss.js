@@ -867,7 +867,7 @@ module.exports = function(canvas, ModeController) {
                     ModeController.updateNodeDistance();
             }
             //only allow node to have a separation distance of 3m between its neighbour
-            if (node.floor_beam && !node.support) {
+            if (ModeController.max_spacing && node.floor_beam && !node.support) {
                 //find out the index of the node in the floor_nodes array
                 var index;
                 for (index in EntityController.floor_nodes) {
@@ -1071,7 +1071,16 @@ var ModeController={
 	new_node:null,
 	new_member: null,
 	show_node_coords: false,
+	max_spacing:false,
 
+	enableMaxSpacing:function() {
+		this.max_spacing = !this.max_spacing;
+		if (this.max_spacing) {
+			$('#max-spacing-button').text("Disable Max Spacing");
+		} else {
+			$('#max-spacing-button').text('Enable Max Spacing');
+		}
+	},
 	carToMiddle:function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
 		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
@@ -1106,7 +1115,7 @@ var ModeController={
 			'move':'move-button', 
 			'erase':'eraser-button', 
 			'add_member':'add-member-button', 
-			'add_node':'add-node-button'
+			'add_node':'add-node-button',
 		};
 		for (var i in modeId) {
 			if (this.mode == i) {
@@ -1133,6 +1142,12 @@ var ModeController={
 			$('#show-coords-button').addClass('active');
 		} else {
 			$('#show-coords-button').removeClass('active');
+		}
+
+		if (this.max_spacing) {
+			$('#max-spacing-button').addClass('active');
+		} else {
+			$('#max-spacing-button').removeClass('active');
 		}
 	},
 	//removes the currently unplaced node from the canvas
@@ -1248,6 +1263,9 @@ $('#show-coords-button').on('click',function() {
 });
 $('#middle-position-button').on('click', function() {
 	ModeController.carToMiddle();
+});
+$('#max-spacing-button').on('click', function() {
+	ModeController.enableMaxSpacing();
 });
 
 module.exports=ModeController;
