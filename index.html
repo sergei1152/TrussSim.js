@@ -17,9 +17,6 @@
 		</nav>
 		
 		<header>
-		<table>
-			<tr>
-				<td>
 					<form class='form-inline' action="" nosubmit>
 						<div class="form-group">
 							<label for="bridge-length">Bridge Length (m)</label>
@@ -52,20 +49,15 @@
 							<label for="num-floor">Number of Floor Nodes</label>
 							<input type="text" class="form-control"  id='num-floor-input'  name="num-floor" placeholder="Default: 6">
 						</div>
+
+						<div class="form-group">
+							<label for="export-cont">Copy and Paste Here</label>
+							<textarea class="form-control" id="export-cont"></textarea>
+							<button class="btn btn-default" id='export'>Export</button>
+							<button class="btn btn-primary" id='import'>Import</button>
+						</div>
 						
 					</form>
-				</td>
-				<td>
-					<div class="export-import" style="position:inline-block;float:right;">
-						<button class="btn btn-default" id='export'>Export</button>
-						<button class="btn btn-primary" id='import'>Import</button>
-						<br><br>
-						<label for="export-cont">Copy and Paste Here</label>
-						<textarea id="export-cont"></textarea>
-					</div>
-				</td>
-			</tr>
-		</table>
 			<br>
 			<div class="menu-buttons">
 				<button class="btn btn-default" id='move-button'>Move</button>

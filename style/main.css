@@ -11,6 +11,9 @@ header{
 	justify-content: center;
 	align-items: center;
 }
+textarea{
+	 resize: none;
+}
 .form-group{
 	margin:12px;
 	
