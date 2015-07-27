@@ -176,6 +176,7 @@ function methodOfJoints(){
 
 	var forces=numeric.solve(force_matrix, solution, false); //solving for the forces
 
+	E.designPass=true; //for checking whether a design meets the criteria
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
@@ -184,9 +185,6 @@ function methodOfJoints(){
 		}
 		else if(forces[i]<0 && Math.abs(forces[i])>E.max_compressive){
 			E.designPass=false;
-		}
-		else{
-			E.designPass=true;
 		}
 	}
 }
@@ -538,6 +536,7 @@ module.exports = Grid;
 var EntityController=require('./EntityController');
 var Grid=require('./Grid');
 var Node=require('./Node');
+var Optimizer=require('./Optimizer');
 
 var InputController=function(){
 
@@ -580,9 +579,22 @@ var InputController=function(){
 
 	$('#num-floor-input').change(function() {
 	    var num_floor_nodes = parseInt($(this).val());
-	    console.log(num_floor_nodes);
 	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) {
 	       EntityController.createFloorNodes(num_floor_nodes);
+	    }
+	});
+
+	$('#optimizer_var_input').change(function() {
+	    var variance = parseInt($(this).val());
+	    if (!isNaN(variance) && variance!==0) {
+	      	Optimizer.variation=variance;
+	    }
+	});
+
+	$('#optimizer_dur_input').change(function() {
+	    var duration = parseInt($(this).val());
+	    if (!isNaN(duration) && duration >1) {
+	       Optimizer.duration=duration;
 	    }
 	});
 
@@ -618,7 +630,7 @@ var InputController=function(){
 };
 
 module.exports=InputController;
-},{"./EntityController":3,"./Grid":5,"./Node":10}],7:[function(require,module,exports){
+},{"./EntityController":3,"./Grid":5,"./Node":10,"./Optimizer":11}],7:[function(require,module,exports){
 var Node = require('./Node');
 var Member = require('./Member');
 var Car = require('./Car');
@@ -1200,9 +1212,10 @@ Node.prototype.isCarOn=function(){
 var EntityController=require('./EntityController');
 var Calculate=require('./Calculate');
 var Grid=require('./Grid');
+
 var Optimizer={
 	variation: 100,
-	duration: 60,
+	duration: 10,
 	min_cost: 10E12,
 	optimal_positions: [],
 	iteration_number: 0,
@@ -1217,21 +1230,21 @@ var Optimizer={
 		var starting_positions=[];
 		var i;
 		var position;
-		for(i=0;i<EntityController.nodes.length;i++){ //creating an array of the nodes that can be varied
+		for(i=0;i<EntityController.nodes.length;i++){ //creating an array of the nodes that can be varied (ie non-floor nodes)
 			if(!EntityController.nodes[i].floor_beam){
 				non_floor_nodes.push(EntityController.nodes[i]);
 			}
 		}
 		for(i=0;i<non_floor_nodes.length;i++){ //saving the starting positions of the floor nodes
-				 position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+				position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
 				starting_positions.push(position);
 		}
-
 		var startTime=Date.now();
+
 		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
 			for(i=0;i<non_floor_nodes.length;i++){
 				//randomizing position of all floor nodes
-				if(Math.round(Math.random)===1){
+				if(Math.round(Math.random())===1){
 					non_floor_nodes[i].left=starting_positions[i][0]+this.variation*Math.random();
 					if(Math.round(Math.random())===1){
 						non_floor_nodes[i].top=starting_positions[i][1]+this.variation*Math.random();

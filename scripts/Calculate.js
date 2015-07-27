@@ -175,6 +175,7 @@ function methodOfJoints(){
 
 	var forces=numeric.solve(force_matrix, solution, false); //solving for the forces
 
+	E.designPass=true; //for checking whether a design meets the criteria
 	//applying the force value to the specified member
 	for(i=0;i<E.members.length;i++){
 		E.members[i].setForce(forces[i]);
@@ -183,9 +184,6 @@ function methodOfJoints(){
 		}
 		else if(forces[i]<0 && Math.abs(forces[i])>E.max_compressive){
 			E.designPass=false;
-		}
-		else{
-			E.designPass=true;
 		}
 	}
 }
