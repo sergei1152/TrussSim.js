@@ -91,6 +91,7 @@ var Optimizer={
 			console.log('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			alert('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			Calculate();
+			Grid.canvas.renderAll();
 		}
 	}
 };
