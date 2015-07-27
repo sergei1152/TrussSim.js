@@ -1,6 +1,12 @@
 var Grid = require('./Grid');
 var Node=require('./Node');
 var Member=require('./Member');
+
+String.prototype.replaceAll = function(str1, str2, ignore) 
+{
+    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+};
+
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -28,14 +34,113 @@ var EntityController = {
     //for optimizer stuff
     designPass: false,
     currentDesignCost: 10E12,
-    
+
+    exportHash: function(jsonStr) {
+        //replace common phrases with specific characters that will not be used and in an order that is particular        
+        var hashStr = jsonStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in phrases) {
+            hashStr = hashStr.replaceAll(i, phrases[i]);     
+        }
+
+        //replace the nodeStr part
+        nodeStrRep = /"nodestr"(\s|\S)+?(?=A)/g;
+        hashStr = hashStr.replace(nodeStrRep, '');
+
+        for (i in numComb) {
+            hashStr = hashStr.replace(i, numComb[i]);     
+        }
+
+        for (i in numDec) {
+            hashStr = hashStr.replace(i, numDec[i]);                 
+        }
+
+        return hashStr;
+    },
+    importHash: function(hashStr) {
+        var jsonStr = hashStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in numDec) {
+            jsonStr = jsonStr.replaceAll(numDec[i], i);                 
+        }
+        
+        for (i in numComb) {
+            jsonStr = jsonStr.replaceAll(numComb[i], i);     
+        }
+
+        for (i in phrases) {
+            jsonStr = jsonStr.replaceAll(phrases[i], i);     
+        }
+
+        this.import(JSON.parse(jsonStr));
+    },
+
+    //export
+    export: function() {
+        var exportObj = {};
+        var impProp = ['nodes', 'members'];
+        var nodeStr = "";
+        //added extra info to quickly get important information
+        for (var j in this.nodes) {
+            if (!this.nodes[j].floor_beam)
+                nodeStr += "("+(Math.round((this.nodes[j].left-this.supportA.left)*100)/100)+", "+(Math.round((this.nodes[j].top-this.supportA.top)*100)/100)+"), ";
+        }
+        exportObj.nodestr = nodeStr;
+
+        //do rounding on x's and y's
+        for (var i in impProp) {
+            exportObj[impProp[i]] = this[impProp[i]];
+            if (impProp[i] == "nodes")
+                for (var o in this[impProp[i]]) {
+                    exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
+                    exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
+                }
+            if (impProp[i] == "members")
+                for (j in this[impProp[i]]) {
+                    exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
+                    exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
+                    exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
+                    exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
+                }                
+        }
+        return exportObj;
+    },
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
         this.clearAllNodes();
-
         //create initial nodes
         for (var i in jsonObj.nodes) {
+            if(jsonObj.nodes[i].floor_beam) {
+            }
             node = new Node();
             node.copyProp(jsonObj.nodes[i]);
             this.addNode(node);
@@ -52,14 +157,9 @@ var EntityController = {
             }
             if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
-                // console.log('floorBeam');
-            }
-            //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
-            if ((+i+1) < jsonObj.num_nodes)
-                if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
-                    this.floor_nodes.push(this.supportB);
             }
         }
+        this.floor_nodes.push(this.supportB);
 
         for (var o in jsonObj.members) {
             member = new Member();
@@ -114,7 +214,8 @@ var EntityController = {
           left: canvasWidth/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         var supportB=new Node({
           support: true,
@@ -122,7 +223,8 @@ var EntityController = {
           left: canvasWidth*7/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         this.supportA=supportA;
         this.supportB=supportB;

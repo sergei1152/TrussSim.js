@@ -12,6 +12,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
         //settings default values of the most important properties
         this.set({
+            showCoords: false,
             left: options.left || -100,
             top: options.top || -100,
             strokeWidth: options.strokeWidth || 5,
@@ -27,23 +28,31 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
-
     
     toObject: function() {
-        return fabric.util.object.extend(this.callSuper('toObject'), {
+        return {
             support: this.get('support'),
             floor_beam: this.get('floor_beam'),
             left: this.get('left'),
             top: this.get('top'),
-            lockMovementY: this.get('lockMovementY'),
-            connected_members: [],
-            // external_forces: this.get('external_forces'),
-            // connected_members: this.get('connected_members')
-        });
+        };
     },
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        var yOff;
+        if (this.floor_beam) {
+            yOff = -30;
+        } else {
+            yOff = 12;
+        }
+        if (this.showCoords) {
+            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            // ctx.fillRect(-10, yOff, 150, 22);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(87, 100%, 24%, 1)'; //color of the font
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
+        }
     }
 });
 
@@ -52,8 +61,18 @@ Node.prototype.copyProp=function(nodeObj) {
     this.left = nodeObj.left;
     this.support = nodeObj.support;
     this.floor_beam = nodeObj.floor_beam;
-    this.stroke = nodeObj.stroke;
-    this.lockMovementY = nodeObj.lockMovementY;
+    if (this.floor_beam) {
+        this.lockMovementY = true;
+    } else {
+        this.lockMovementY = false;
+    }
+    if (this.support) {
+        this.stroke = '#F41313';
+        this.lockMovementX=true;
+    } else if (this.floor_beam) {
+        this.stroke = '#000000';
+        this.lockMovementX=false;
+    } //else default
 };
 
 module.exports=Node;

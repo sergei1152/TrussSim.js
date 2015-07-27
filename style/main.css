@@ -16,7 +16,11 @@ textarea{
 }
 .form-group{
 	margin:12px;
-	
+}
+.floor-node{
+	display:block;
+	margin: auto;
+	width: 200px;
 }
 
 .menu-buttons{

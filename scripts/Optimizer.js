@@ -13,12 +13,8 @@ var Optimizer={
 		//reseting parameters
 		this.iteration_number=0;
 		this.optimal_positions=[];
-		this.min_cost=10E12;
+		var non_floor_nodes=[],starting_positions=[],i,position;
 
-		var non_floor_nodes=[];
-		var starting_positions=[];
-		var i;
-		var position;
 		for(i=0;i<EntityController.nodes.length;i++){ //creating an array of the nodes that can be varied (ie non-floor nodes)
 			if(!EntityController.nodes[i].floor_beam){
 				non_floor_nodes.push(EntityController.nodes[i]);
@@ -28,6 +24,18 @@ var Optimizer={
 				position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
 				starting_positions.push(position);
 		}
+
+		if(EntityController.designPass){
+			this.min_cost=EntityController.currentDesignCost;
+			for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+				position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+				this.optimal_positions.push(position);
+			}
+		}
+		else{
+			this.min_cost=10E12;
+		}
+		
 		var startTime=Date.now();
 
 		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
@@ -80,9 +88,9 @@ var Optimizer={
 				non_floor_nodes[i].moveMembers(Grid.canvas);
 				Grid.canvas.renderAll();
 			}
-			Calculate();
 			console.log('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			alert('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
+			Calculate();
 		}
 	}
 };

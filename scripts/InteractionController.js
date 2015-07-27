@@ -30,6 +30,9 @@ module.exports = function(canvas, ModeController) {
 
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
+        if (ModeController.show_node_coords) {
+            ModeController.updateNodeDistance();
+        }
         if (ModeController.mode === 'add_node' && !ModeController.simulation) {
             canvas.remove(ModeController.new_node); //for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
@@ -46,7 +49,6 @@ module.exports = function(canvas, ModeController) {
                         x2: event.target.left,
                         y2: event.target.top
                     });
-
                     ModeController.new_member.start_node = event.target;
                     event.target.connected_members.push(ModeController.new_member);
                     canvas.renderAll();
@@ -63,6 +65,16 @@ module.exports = function(canvas, ModeController) {
                     canvas.sendToBack(ModeController.new_member);
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    if(event.e.shiftKey) {
+                        ModeController.new_member.set({ //position the start of the member to be at the center of the node
+                            x1: event.target.left,
+                            y1: event.target.top,
+                            x2: event.target.left,
+                            y2: event.target.top
+                        });
+                        ModeController.new_member.start_node = event.target;
+                        event.target.connected_members.push(ModeController.new_member);
+                    }
                     canvas.add(ModeController.new_member);
                 }
             }
@@ -114,7 +126,6 @@ module.exports = function(canvas, ModeController) {
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
 
-
     });
 
     canvas.on('mouse:over', function(e) {
@@ -134,6 +145,28 @@ module.exports = function(canvas, ModeController) {
     canvas.on('object:moving', function(event) {
         if (event.target.type == 'node') { //if a node is moving
             var node = event.target;
+            if(node.floor_beam && ModeController.show_node_coords) {
+                    ModeController.updateNodeDistance();
+            }
+            //only allow node to have a separation distance of 3m between its neighbour
+            if (ModeController.max_spacing && node.floor_beam && !node.support) {
+                //find out the index of the node in the floor_nodes array
+                var index;
+                for (index in EntityController.floor_nodes) {
+                    if (EntityController.floor_nodes[index].left == node.left) {
+                        break;
+                    }
+                }
+                var left, right, gridMeter;
+                gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+                left = (node.left - EntityController.floor_nodes[index-1].left)/gridMeter;
+                right = (EntityController.floor_nodes[+index+1].left - node.left)/gridMeter;
+                if (left > 3) {
+                    node.left = EntityController.floor_nodes[+index-1].left+3*gridMeter;
+                } else if (right > 3) {
+                    node.left = EntityController.floor_nodes[+index+1].left-3*gridMeter;
+                }
+            }
             node.moveMembers(canvas);
             if (ModeController.simulation) {
                 Calculate();

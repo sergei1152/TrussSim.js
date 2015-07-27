@@ -13,7 +13,86 @@ var ModeController={
 	simulation: false,
 	new_node:null,
 	new_member: null,
+	show_node_coords: false,
+	max_spacing:false,
 
+	enableMaxSpacing:function() {
+		this.max_spacing = !this.max_spacing;
+		if (this.max_spacing) {
+			$('#max-spacing-button').text("Disable Max Spacing");
+		} else {
+			$('#max-spacing-button').text('Enable Max Spacing');
+		}
+	},
+	carToMiddle:function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
+		Calculate();
+		Grid.canvas.renderAll();
+	},
+	showNodeCoords:function() {
+		this.show_node_coords = !this.show_node_coords;
+		for (var i in EntityController.nodes) {
+			EntityController.nodes[i].showCoords = this.show_node_coords;
+		}
+		if (this.show_node_coords) {
+			this.updateNodeDistance();
+		} else {
+			$('#floorNodeDist').text('');
+		}
+		Grid.canvas.renderAll();
+	},
+	updateNodeDistance: function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		var text = "• ";
+		for (var i in EntityController.floor_nodes) {
+			if (i > 0) {
+					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ' • ';
+			}
+		}
+
+		$('#floorNodeDist').text(text);
+	},
+	setButtonStates:function() {
+		var modeId={
+			'move':'move-button', 
+			'erase':'eraser-button', 
+			'add_member':'add-member-button', 
+			'add_node':'add-node-button',
+		};
+		for (var i in modeId) {
+			if (this.mode == i) {
+				//add active class
+				$('#'+modeId[i]).addClass('active');
+				//remove active class from others
+				for (var j in modeId) {
+					if (j != i) {
+						$('#'+modeId[j]).removeClass('active');
+					}
+				}
+			}
+		}
+		//set simulation button as active
+		if (this.simulation) {
+			$('#simulation-button').addClass('active');
+			$('#middle-position-button').removeClass('disabled');
+		} else {
+			$('#simulation-button').removeClass('active');
+			$('#middle-position-button').addClass('disabled');
+		}
+		//set node coord display button
+		if (this.show_node_coords) {
+			$('#show-coords-button').addClass('active');
+		} else {
+			$('#show-coords-button').removeClass('active');
+		}
+
+		if (this.max_spacing) {
+			$('#max-spacing-button').addClass('active');
+		} else {
+			$('#max-spacing-button').removeClass('active');
+		}
+	},
 	//removes the currently unplaced node from the canvas
 	clearNode:function(){
 		if(ModeController.new_node){
@@ -40,11 +119,13 @@ var ModeController={
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	move_mode:function(){
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	simulation_mode:function(){
 		this.simulation=!this.simulation;
@@ -84,6 +165,7 @@ var ModeController={
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
@@ -93,6 +175,7 @@ var ModeController={
 			this.new_member=new Member();
 			this.canvas.add(this.new_member); //adds the new member to the canvas
 		}
+		this.setButtonStates();
 	},
 	add_node_mode:function(){
 		this.clearMember(); //gets rid of any existing unplaced members
@@ -102,8 +185,8 @@ var ModeController={
 			this.new_node=new Node();
 			this.canvas.add(this.new_node); //adds the new node to the canvas
 		}
+		this.setButtonStates();
 	}
-
 };
 
 $('#eraser-button').on('click',function () {
@@ -117,6 +200,15 @@ $('#add-member-button').on('click',function() {
 });
 $('#add-node-button').on('click',function() {
 	ModeController.add_node_mode();
+});
+$('#show-coords-button').on('click',function() {
+	ModeController.showNodeCoords();
+});
+$('#middle-position-button').on('click', function() {
+	ModeController.carToMiddle();
+});
+$('#max-spacing-button').on('click', function() {
+	ModeController.enableMaxSpacing();
 });
 
 module.exports=ModeController;

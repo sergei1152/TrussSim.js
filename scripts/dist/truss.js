@@ -145,6 +145,7 @@ function methodOfJoints(){
 			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
 				if(E.members[j]===E.nodes[i].connected_members[k]){
 					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
+					// if(Math.round(E.nodes[i].connected_members[k].x1*100)/100===Math.round(E.nodes[i].left*100)/100 && Math.round(E.nodes[i].connected_members[k].y1*100)/100===Math.round(E.nodes[i].top*100)/100){
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
 					}
@@ -253,6 +254,12 @@ module.exports = Car;
 var Grid = require('./Grid');
 var Node=require('./Node');
 var Member=require('./Member');
+
+String.prototype.replaceAll = function(str1, str2, ignore) 
+{
+    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+};
+
 //Keeps track of all the nodes and members in the bridge design
 var EntityController = {
 	//configurable variables
@@ -280,14 +287,113 @@ var EntityController = {
     //for optimizer stuff
     designPass: false,
     currentDesignCost: 10E12,
-    
+
+    exportHash: function(jsonStr) {
+        //replace common phrases with specific characters that will not be used and in an order that is particular        
+        var hashStr = jsonStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in phrases) {
+            hashStr = hashStr.replaceAll(i, phrases[i]);     
+        }
+
+        //replace the nodeStr part
+        nodeStrRep = /"nodestr"(\s|\S)+?(?=A)/g;
+        hashStr = hashStr.replace(nodeStrRep, '');
+
+        for (i in numComb) {
+            hashStr = hashStr.replace(i, numComb[i]);     
+        }
+
+        for (i in numDec) {
+            hashStr = hashStr.replace(i, numDec[i]);                 
+        }
+
+        return hashStr;
+    },
+    importHash: function(hashStr) {
+        var jsonStr = hashStr;
+        var phrases = {"\"nodes\":":'A', "\"support\":":'B', "\"floor_beam\":":'C', "\"top\":":'D', "\"left\":":'E',
+                        "\"members\":":'F', "\"x1\":":'G', "\"x2\":":'H', "\"y1\":":'I', "\"y2\":":'J',
+                        "true":'K', "false":'L', "[{":'M', "]}":'N'};
+        var numComb = {}; //some number combinations
+        var numDec = {}; //number and decimal combinations
+        var i, find, re;
+
+        for (i = 10; i < 36; i++) {
+            numComb[i]=String.fromCharCode(87+i);
+        }
+
+        for (i = 0; i < 10; i++) {
+            numDec[(i+'.')] = String.fromCharCode(33+i); 
+        }
+
+        for (i in numDec) {
+            jsonStr = jsonStr.replaceAll(numDec[i], i);                 
+        }
+        
+        for (i in numComb) {
+            jsonStr = jsonStr.replaceAll(numComb[i], i);     
+        }
+
+        for (i in phrases) {
+            jsonStr = jsonStr.replaceAll(phrases[i], i);     
+        }
+
+        this.import(JSON.parse(jsonStr));
+    },
+
+    //export
+    export: function() {
+        var exportObj = {};
+        var impProp = ['nodes', 'members'];
+        var nodeStr = "";
+        //added extra info to quickly get important information
+        for (var j in this.nodes) {
+            if (!this.nodes[j].floor_beam)
+                nodeStr += "("+(Math.round((this.nodes[j].left-this.supportA.left)*100)/100)+", "+(Math.round((this.nodes[j].top-this.supportA.top)*100)/100)+"), ";
+        }
+        exportObj.nodestr = nodeStr;
+
+        //do rounding on x's and y's
+        for (var i in impProp) {
+            exportObj[impProp[i]] = this[impProp[i]];
+            if (impProp[i] == "nodes")
+                for (var o in this[impProp[i]]) {
+                    exportObj[impProp[i]][o].left = Math.round(exportObj[impProp[i]][o].left*100)/100;
+                    exportObj[impProp[i]][o].top = Math.round(exportObj[impProp[i]][o].top*100)/100;
+                }
+            if (impProp[i] == "members")
+                for (j in this[impProp[i]]) {
+                    exportObj[impProp[i]][j].x1 = Math.round(exportObj[impProp[i]][j].x1*100)/100;
+                    exportObj[impProp[i]][j].x2 = Math.round(exportObj[impProp[i]][j].x2*100)/100;
+                    exportObj[impProp[i]][j].y1 = Math.round(exportObj[impProp[i]][j].y1*100)/100;
+                    exportObj[impProp[i]][j].y2 = Math.round(exportObj[impProp[i]][j].y2*100)/100;
+                }                
+        }
+        return exportObj;
+    },
     //recreate everything on the canvas from the entity controller
     import: function(jsonObj) {
         //reset everything
         this.clearAllNodes();
-
         //create initial nodes
         for (var i in jsonObj.nodes) {
+            if(jsonObj.nodes[i].floor_beam) {
+            }
             node = new Node();
             node.copyProp(jsonObj.nodes[i]);
             this.addNode(node);
@@ -304,14 +410,9 @@ var EntityController = {
             }
             if(node.floor_beam && !node.support) {
                 this.floor_nodes.push(node);
-                // console.log('floorBeam');
-            }
-            //end of support nodes //could cause an error here if trying to import a bridge with only floor beams
-            if ((+i+1) < jsonObj.num_nodes)
-                if(node.floor_beam && !jsonObj.nodes[+i+1].floor_beam) {
-                    this.floor_nodes.push(this.supportB);
             }
         }
+        this.floor_nodes.push(this.supportB);
 
         for (var o in jsonObj.members) {
             member = new Member();
@@ -366,7 +467,8 @@ var EntityController = {
           left: canvasWidth/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         var supportB=new Node({
           support: true,
@@ -374,7 +476,8 @@ var EntityController = {
           left: canvasWidth*7/8,
           top: canvasHeight/3,
           stroke: '#F41313',
-          lockMovementY: true
+          lockMovementY: true,
+          lockMovementX: true
         });
         this.supportA=supportA;
         this.supportB=supportB;
@@ -608,26 +711,35 @@ var InputController=function(){
 	    }
 	});
 
-	$('#export').click(function() {
-		// var temp = EntityController.nodes;
-		// for (var node in EntityController.nodes) {
-		// 	EntityController.nodes[node].connected_members = [];
-		// }
-		jsonStr = JSON.stringify(EntityController);
-		// EntityController.nodes = temp;
+	$('#exportBtn').click(function() {
+		jsonStr = JSON.stringify(EntityController.export());
 		$('#export-cont').val(jsonStr);
+		$('#uniqueHash').val(EntityController.exportHash(jsonStr));
 		return false;
 	});
-	$('#import').click(function() {
+
+	$('#importBtn').click(function() {
 		jsonStr = $('#export-cont').val();
 		if (jsonStr.length > 0) {
-			jsonObj = JSON.parse(jsonStr);
-			EntityController.import(jsonObj);
+			if (jsonStr.charAt(1) == 'A') {
+				EntityController.importHash(jsonStr);
+			} else {
+				jsonObj = JSON.parse(jsonStr);
+				EntityController.import(jsonObj);
+			}
 		}
 		return false;
 	});
 
+	$('#export-cont').click(function () {
+		this.select();
+	});
+	$('#uniqueHash').click(function() {
+		this.select();
+	});
 };
+
+
 
 module.exports=InputController;
 },{"./EntityController":3,"./Grid":5,"./Node":10,"./Optimizer":11}],7:[function(require,module,exports){
@@ -663,6 +775,9 @@ module.exports = function(canvas, ModeController) {
 
     //Handles placements of new nodes
     canvas.on('mouse:up', function(event) {
+        if (ModeController.show_node_coords) {
+            ModeController.updateNodeDistance();
+        }
         if (ModeController.mode === 'add_node' && !ModeController.simulation) {
             canvas.remove(ModeController.new_node); //for some reason have to remove and re-add node to avoid weird glitcheness
             canvas.add(ModeController.new_node);
@@ -679,7 +794,6 @@ module.exports = function(canvas, ModeController) {
                         x2: event.target.left,
                         y2: event.target.top
                     });
-
                     ModeController.new_member.start_node = event.target;
                     event.target.connected_members.push(ModeController.new_member);
                     canvas.renderAll();
@@ -696,6 +810,16 @@ module.exports = function(canvas, ModeController) {
                     canvas.sendToBack(ModeController.new_member);
                     EntityController.addMember(ModeController.new_member);
                     ModeController.new_member = new Member(); //create a new member while leaving the old one in the canvas
+                    if(event.e.shiftKey) {
+                        ModeController.new_member.set({ //position the start of the member to be at the center of the node
+                            x1: event.target.left,
+                            y1: event.target.top,
+                            x2: event.target.left,
+                            y2: event.target.top
+                        });
+                        ModeController.new_member.start_node = event.target;
+                        event.target.connected_members.push(ModeController.new_member);
+                    }
                     canvas.add(ModeController.new_member);
                 }
             }
@@ -747,7 +871,6 @@ module.exports = function(canvas, ModeController) {
     //Handles erasing nodes and members, as well as placing members
     canvas.on('object:selected', function(event) {
 
-
     });
 
     canvas.on('mouse:over', function(e) {
@@ -767,6 +890,28 @@ module.exports = function(canvas, ModeController) {
     canvas.on('object:moving', function(event) {
         if (event.target.type == 'node') { //if a node is moving
             var node = event.target;
+            if(node.floor_beam && ModeController.show_node_coords) {
+                    ModeController.updateNodeDistance();
+            }
+            //only allow node to have a separation distance of 3m between its neighbour
+            if (ModeController.max_spacing && node.floor_beam && !node.support) {
+                //find out the index of the node in the floor_nodes array
+                var index;
+                for (index in EntityController.floor_nodes) {
+                    if (EntityController.floor_nodes[index].left == node.left) {
+                        break;
+                    }
+                }
+                var left, right, gridMeter;
+                gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+                left = (node.left - EntityController.floor_nodes[index-1].left)/gridMeter;
+                right = (EntityController.floor_nodes[+index+1].left - node.left)/gridMeter;
+                if (left > 3) {
+                    node.left = EntityController.floor_nodes[+index-1].left+3*gridMeter;
+                } else if (right > 3) {
+                    node.left = EntityController.floor_nodes[+index+1].left-3*gridMeter;
+                }
+            }
             node.moveMembers(canvas);
             if (ModeController.simulation) {
                 Calculate();
@@ -861,35 +1006,22 @@ var Member = fabric.util.createClass(fabric.Line, {
 
     toObject: function() {
         retObj = {};
-        var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+        var impAttr = ['x1', 'x2', 'y1', 'y2'];
         for (var i in impAttr) {
             retObj[impAttr[i]] = this[impAttr[i]];
         }
-        retObj.start_node = null;
-        retObj.end_node = null;
-        return fabric.util.object.extend(this.callSuper('toObject'), retObj
-        // {
-            // start_node: null,
-            // end_node: null,
-
-            // x1: this.get('x1'),
-            // x2: this.get('x2'),
-            // y1: this.get('y1'),
-            // y2: this.get('y2'),
-            // member_length: this.get('member_length')
-            // force: this.get('force'),
-            // start_node: this.get('start_node'),
-            // end_node: this.get('end_node'),
-            // label: this.get('label')
-        // }
-        );
+        return retObj;
     },
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-        ctx.font = '20px Arial';
-        ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
-        ctx.fillText(this.label, 0,20);
+        if (this.force !== null) {
+            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            // ctx.fillRect(-10, -8, 80, 28);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
+            ctx.fillText(this.label, 0,20);
+        }
     }
 });
 
@@ -903,29 +1035,25 @@ Member.prototype.calcUnitVector=function(){
 };
 
 Member.prototype.copyProp=function(memberObj) {
-    var impAttr = ['x1', 'x2', 'y1', 'y2', 'member_length', 'width', 'height', 'left', 'top'];
+    var impAttr = ['x1', 'x2', 'y1', 'y2'];
     for (var i in impAttr) {
         this[impAttr[i]] = memberObj[impAttr[i]];
     }
-    // this.x1=memberObj.x1;
-    // this.y1=memberObj.y1;
-    // this.x2=memberObj.x2;
-    // this.y2=memberObj.y2;
-    // this.member_length=memberObj.member_length;
-    // this.width=memberObj.width;
-    // this.height=memberObj.height;
-    // this.left=memberObj.left;
-    // this.top=memberObj.top;
+    this.width = Math.abs(this.x1-this.x2);
+    this.height = Math.abs(this.y1-this.y2);
+    this.left = Math.min(this.x1,this.x2)+this.width/2;
+    this.top = Math.min(this.y1, this.y2)+this.height/2;
+    this.member_length = Math.sqrt(this.width*this.width+this.height*this.height);
 };
 
 Member.prototype.isStartNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x1) && Math.round(nodeObj.top) == Math.round(this.y1))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x1*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y1*100)/100)
         return true;
     return false;
 };
 
 Member.prototype.isEndNode=function(nodeObj) {
-    if (Math.round(nodeObj.left) == Math.round(this.x2) && Math.round(nodeObj.top) == Math.round(this.y2))
+    if (Math.round(nodeObj.left*100)/100 == Math.round(this.x2*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y2*100)/100)
         return true;
     return false;
 };
@@ -941,7 +1069,7 @@ Member.prototype.setForce=function(x){
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(360, '+(percentMax*0.3+70)+'%,50%, 1)';
+            this.stroke='hsla(360, '+(percentMax*0.5+50)+'%,50%, 1)';
         }
     }
     else if(x>0){ //if the force is tensile
@@ -950,7 +1078,7 @@ Member.prototype.setForce=function(x){
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(243, '+(percentMax*0.3+70)+'%,50%, 1)';
+            this.stroke='hsla(243, '+(percentMax*0.5+50)+'%,50%, 1)';
         }
     }
     else{
@@ -976,7 +1104,86 @@ var ModeController={
 	simulation: false,
 	new_node:null,
 	new_member: null,
+	show_node_coords: false,
+	max_spacing:false,
 
+	enableMaxSpacing:function() {
+		this.max_spacing = !this.max_spacing;
+		if (this.max_spacing) {
+			$('#max-spacing-button').text("Disable Max Spacing");
+		} else {
+			$('#max-spacing-button').text('Enable Max Spacing');
+		}
+	},
+	carToMiddle:function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
+		Calculate();
+		Grid.canvas.renderAll();
+	},
+	showNodeCoords:function() {
+		this.show_node_coords = !this.show_node_coords;
+		for (var i in EntityController.nodes) {
+			EntityController.nodes[i].showCoords = this.show_node_coords;
+		}
+		if (this.show_node_coords) {
+			this.updateNodeDistance();
+		} else {
+			$('#floorNodeDist').text('');
+		}
+		Grid.canvas.renderAll();
+	},
+	updateNodeDistance: function() {
+		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
+		var text = "• ";
+		for (var i in EntityController.floor_nodes) {
+			if (i > 0) {
+					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ' • ';
+			}
+		}
+
+		$('#floorNodeDist').text(text);
+	},
+	setButtonStates:function() {
+		var modeId={
+			'move':'move-button', 
+			'erase':'eraser-button', 
+			'add_member':'add-member-button', 
+			'add_node':'add-node-button',
+		};
+		for (var i in modeId) {
+			if (this.mode == i) {
+				//add active class
+				$('#'+modeId[i]).addClass('active');
+				//remove active class from others
+				for (var j in modeId) {
+					if (j != i) {
+						$('#'+modeId[j]).removeClass('active');
+					}
+				}
+			}
+		}
+		//set simulation button as active
+		if (this.simulation) {
+			$('#simulation-button').addClass('active');
+			$('#middle-position-button').removeClass('disabled');
+		} else {
+			$('#simulation-button').removeClass('active');
+			$('#middle-position-button').addClass('disabled');
+		}
+		//set node coord display button
+		if (this.show_node_coords) {
+			$('#show-coords-button').addClass('active');
+		} else {
+			$('#show-coords-button').removeClass('active');
+		}
+
+		if (this.max_spacing) {
+			$('#max-spacing-button').addClass('active');
+		} else {
+			$('#max-spacing-button').removeClass('active');
+		}
+	},
 	//removes the currently unplaced node from the canvas
 	clearNode:function(){
 		if(ModeController.new_node){
@@ -1003,11 +1210,13 @@ var ModeController={
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	move_mode:function(){
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	simulation_mode:function(){
 		this.simulation=!this.simulation;
@@ -1047,6 +1256,7 @@ var ModeController={
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
+		this.setButtonStates();
 	},
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
@@ -1056,6 +1266,7 @@ var ModeController={
 			this.new_member=new Member();
 			this.canvas.add(this.new_member); //adds the new member to the canvas
 		}
+		this.setButtonStates();
 	},
 	add_node_mode:function(){
 		this.clearMember(); //gets rid of any existing unplaced members
@@ -1065,8 +1276,8 @@ var ModeController={
 			this.new_node=new Node();
 			this.canvas.add(this.new_node); //adds the new node to the canvas
 		}
+		this.setButtonStates();
 	}
-
 };
 
 $('#eraser-button').on('click',function () {
@@ -1080,6 +1291,15 @@ $('#add-member-button').on('click',function() {
 });
 $('#add-node-button').on('click',function() {
 	ModeController.add_node_mode();
+});
+$('#show-coords-button').on('click',function() {
+	ModeController.showNodeCoords();
+});
+$('#middle-position-button').on('click', function() {
+	ModeController.carToMiddle();
+});
+$('#max-spacing-button').on('click', function() {
+	ModeController.enableMaxSpacing();
 });
 
 module.exports=ModeController;
@@ -1099,6 +1319,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
         //settings default values of the most important properties
         this.set({
+            showCoords: false,
             left: options.left || -100,
             top: options.top || -100,
             strokeWidth: options.strokeWidth || 5,
@@ -1114,23 +1335,31 @@ var Node = fabric.util.createClass(fabric.Circle, {
             connected_members: []
         });
     },
-
     
     toObject: function() {
-        return fabric.util.object.extend(this.callSuper('toObject'), {
+        return {
             support: this.get('support'),
             floor_beam: this.get('floor_beam'),
             left: this.get('left'),
             top: this.get('top'),
-            lockMovementY: this.get('lockMovementY'),
-            connected_members: [],
-            // external_forces: this.get('external_forces'),
-            // connected_members: this.get('connected_members')
-        });
+        };
     },
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
+        var yOff;
+        if (this.floor_beam) {
+            yOff = -30;
+        } else {
+            yOff = 12;
+        }
+        if (this.showCoords) {
+            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
+            // ctx.fillRect(-10, yOff, 150, 22);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'hsla(87, 100%, 24%, 1)'; //color of the font
+            ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
+        }
     }
 });
 
@@ -1139,8 +1368,18 @@ Node.prototype.copyProp=function(nodeObj) {
     this.left = nodeObj.left;
     this.support = nodeObj.support;
     this.floor_beam = nodeObj.floor_beam;
-    this.stroke = nodeObj.stroke;
-    this.lockMovementY = nodeObj.lockMovementY;
+    if (this.floor_beam) {
+        this.lockMovementY = true;
+    } else {
+        this.lockMovementY = false;
+    }
+    if (this.support) {
+        this.stroke = '#F41313';
+        this.lockMovementX=true;
+    } else if (this.floor_beam) {
+        this.stroke = '#000000';
+        this.lockMovementX=false;
+    } //else default
 };
 
 module.exports=Node;
@@ -1224,12 +1463,8 @@ var Optimizer={
 		//reseting parameters
 		this.iteration_number=0;
 		this.optimal_positions=[];
-		this.min_cost=10E12;
+		var non_floor_nodes=[],starting_positions=[],i,position;
 
-		var non_floor_nodes=[];
-		var starting_positions=[];
-		var i;
-		var position;
 		for(i=0;i<EntityController.nodes.length;i++){ //creating an array of the nodes that can be varied (ie non-floor nodes)
 			if(!EntityController.nodes[i].floor_beam){
 				non_floor_nodes.push(EntityController.nodes[i]);
@@ -1239,6 +1474,18 @@ var Optimizer={
 				position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
 				starting_positions.push(position);
 		}
+
+		if(EntityController.designPass){
+			this.min_cost=EntityController.currentDesignCost;
+			for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
+				position=[non_floor_nodes[i].left,non_floor_nodes[i].top];
+				this.optimal_positions.push(position);
+			}
+		}
+		else{
+			this.min_cost=10E12;
+		}
+		
 		var startTime=Date.now();
 
 		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
@@ -1291,9 +1538,9 @@ var Optimizer={
 				non_floor_nodes[i].moveMembers(Grid.canvas);
 				Grid.canvas.renderAll();
 			}
-			Calculate();
 			console.log('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			alert('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
+			Calculate();
 		}
 	}
 };
@@ -1353,8 +1600,5 @@ module.exports=ResizeController;
 
   EntityController.createFloorNodes(num_floor_beams);
 
-
-
-
-
+  ModeController.move_mode();
 },{"./EntityController":3,"./Grid":5,"./InputController":6,"./InteractionController":7,"./ModeController":9,"./Node":10,"./ResizeController":12}]},{},[13]);
