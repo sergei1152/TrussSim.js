@@ -1,3 +1,4 @@
+//the grid singleton. Contains all properties about the grid as well as methods to create and resize the grid
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -38,7 +39,7 @@ var Grid = {
             Grid.canvas.sendToBack(line);
         }
     },
-    calcGridMeter: function(EntityController){
+    calcGridMeter: function(EntityController){ 
         if(EntityController.supportA && EntityController.supportB){
             this.grid_meter=(EntityController.supportB.left-EntityController.supportA.left)/(this.grid_size*EntityController.bridge_length);
         }

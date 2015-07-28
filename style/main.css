@@ -4,7 +4,6 @@ html, body{
 	margin:0;
 	padding:0;
 }
-
 header{
 	display: flex;
 	flex-wrap: wrap;
@@ -14,6 +13,9 @@ header{
 textarea{
 	 resize: none;
 }
+button{
+	margin-top: 6px;
+}
 .form-group{
 	margin:12px;
 }
@@ -22,7 +24,6 @@ textarea{
 	margin: auto;
 	width: 200px;
 }
-
 .menu-buttons{
 	margin:12px;
 }

@@ -6,7 +6,7 @@ var EntityController = require('./EntityController.js');
 var Calculate=require('./Calculate');
 var Car=require('./Car');
 var Grid=require('./Grid');
-//Controls the current mode
+
 var ModeController={
 	canvas: null,
 	mode: 'move',
@@ -16,7 +16,7 @@ var ModeController={
 	show_node_coords: false,
 	max_spacing:false,
 
-	enableMaxSpacing:function() {
+	enableMaxSpacing:function() { //max spacing that doesnt let any of the floor nodes get farther than 3m
 		this.max_spacing = !this.max_spacing;
 		if (this.max_spacing) {
 			$('#max-spacing-button').text("Disable Max Spacing");
@@ -24,12 +24,14 @@ var ModeController={
 			$('#max-spacing-button').text('Enable Max Spacing');
 		}
 	},
+	//positions the car to the exact middle of the bridge
 	carToMiddle:function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
 		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
 		Calculate();
 		Grid.canvas.renderAll();
 	},
+	//shows the coordinates of all the nodes
 	showNodeCoords:function() {
 		this.show_node_coords = !this.show_node_coords;
 		for (var i in EntityController.nodes) {
@@ -42,6 +44,7 @@ var ModeController={
 		}
 		Grid.canvas.renderAll();
 	},
+	//updates the distance between each of the floor nodes
 	updateNodeDistance: function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
 		var text = "• ";
@@ -50,7 +53,6 @@ var ModeController={
 					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ' • ';
 			}
 		}
-
 		$('#floorNodeDist').text(text);
 	},
 	setButtonStates:function() {
@@ -115,18 +117,21 @@ var ModeController={
 			ModeController.new_member=null;
 		}
 	},
+	//activates erase mode
 	erase_mode:function(){
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates erase mode
 	move_mode:function(){
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates simulation mode
 	simulation_mode:function(){
 		this.simulation=!this.simulation;
 		if(this.simulation){
@@ -137,13 +142,9 @@ var ModeController={
 	        } else if (!EntityController.car) { //if the car object doesnt exist yet
 	            var car = new Car({
 	                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
-	                height: Grid.grid_size,
-	                left: 50,
-	                top: Grid.canvas.getHeight() / 3 - 40,
-	                label: 'Distributed Load',
-	                length: EntityController.car_length,
-	                weight: EntityController.car_weight
+	                top: Grid.canvas.getHeight() / 3 - 40
 	            });
+
 	            EntityController.car = car;
 	            Grid.canvas.add(car);
 	            Calculate();
@@ -167,6 +168,7 @@ var ModeController={
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates add member mode
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
 
@@ -177,6 +179,7 @@ var ModeController={
 		}
 		this.setButtonStates();
 	},
+	//actiavates add node mode
 	add_node_mode:function(){
 		this.clearMember(); //gets rid of any existing unplaced members
 
@@ -189,6 +192,7 @@ var ModeController={
 	}
 };
 
+//event handles for setting the different modes based on the buttons the user presses
 $('#eraser-button').on('click',function () {
 	ModeController.erase_mode();
 });

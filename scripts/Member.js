@@ -1,5 +1,4 @@
-// var E=require('./EntityController');
-
+//member fabric.js object that represents the individual members of the truss
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -10,7 +9,6 @@ var Member = fabric.util.createClass(fabric.Line, {
 
         this.callSuper('initialize', options);
 
-        //settings default values of the most important properties
         this.set({
             fill: 'blue',
             stroke: 'hsla(243, 0%,50%, 1)',
@@ -24,8 +22,6 @@ var Member = fabric.util.createClass(fabric.Line, {
             x2: options.x2 || -100,
             y2: options.y2 || -100,
             label: options.label || '',
-            max_tensile: 12,
-            max_compressive: 8,
             force:null,
             member_length: null,
             unit_vector: [],
@@ -46,8 +42,7 @@ var Member = fabric.util.createClass(fabric.Line, {
     _render: function(ctx) {
         this.callSuper('_render', ctx);
         if (this.force !== null) {
-            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            // ctx.fillRect(-10, -8, 80, 28);
+            // ctx.fillRect(-10, -8, 80, 28); //shows a white rectangle behind the force
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
             ctx.fillText(this.label, 0,20);
@@ -55,15 +50,18 @@ var Member = fabric.util.createClass(fabric.Line, {
     }
 });
 
+//calculates the length of the member in pixels for cost calculations
 Member.prototype.calcLength=function(){
     this.member_length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
 };
 
+//calculates the unit vector of the member (length needs to be calculated first, so calcLength() should be called before hand)
 Member.prototype.calcUnitVector=function(){
     this.unit_vector[0]=(this.x2-this.x1)/this.member_length;
     this.unit_vector[1]=(this.y2-this.y1)/this.member_length;
 };
 
+//for the import functionality, takes in a json singleton representing a member, and applies its properties to the current member
 Member.prototype.copyProp=function(memberObj) {
     var impAttr = ['x1', 'x2', 'y1', 'y2'];
     for (var i in impAttr) {
@@ -76,12 +74,14 @@ Member.prototype.copyProp=function(memberObj) {
     this.member_length = Math.sqrt(this.width*this.width+this.height*this.height);
 };
 
+//checks if a node is the start node of the member
 Member.prototype.isStartNode=function(nodeObj) {
     if (Math.round(nodeObj.left*100)/100 == Math.round(this.x1*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y1*100)/100)
         return true;
     return false;
 };
 
+//checks if a node is the end node of the member
 Member.prototype.isEndNode=function(nodeObj) {
     if (Math.round(nodeObj.left*100)/100 == Math.round(this.x2*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y2*100)/100)
         return true;
@@ -90,25 +90,26 @@ Member.prototype.isEndNode=function(nodeObj) {
 
 module.exports=Member;
 
-Member.prototype.setForce=function(x){
+//sets the force of the member as well as sets the proper color based on if its under compression or tension, as well as how close it is to its maximum tension or compression
+Member.prototype.setForce=function(x,EntityController){
     this.force=x;
     var percentMax;
     if(x<0){ //if the force is compressive
-        percentMax=-x*100/this.max_compressive;
+        percentMax=-x*100/EntityController.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(360, '+(percentMax*0.5+50)+'%,50%, 1)';
+            this.stroke='hsla(360, '+(percentMax*0.8+20)+'%,50%, 1)';
         }
     }
     else if(x>0){ //if the force is tensile
-        percentMax=x*100/this.max_tensile;
+        percentMax=x*100/EntityController.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(243, '+(percentMax*0.5+50)+'%,50%, 1)';
+            this.stroke='hsla(243, '+(percentMax*0.8+20)+'%,50%, 1)';
         }
     }
     else{

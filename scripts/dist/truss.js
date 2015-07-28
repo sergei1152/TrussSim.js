@@ -1,10 +1,13 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+//Performs the cost and force calculation of the truss
 var E=require('./EntityController');
 var Grid=require('./Grid');
 
+//Calculating the support reactions at the 2 support nodes using moments
 function calculateSupportReactions(){
 	Grid.calcGridMeter(E);
 	E.calcCarLengthPx();
+
 	E.car.width=E.car_length_px; //recalculating the car width for the canvas
 	var bridge_length_px=E.bridge_length*Grid.grid_size*Grid.grid_meter; //converting bridge length in meters to pixels
 	var actual_weight;
@@ -33,7 +36,8 @@ function calculateSupportReactions(){
 	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
-function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched
+//Calculates the reaction force at the nodes that the car is on using moments
+function calculateWeightDistributionOfCar(){ 
 	var x, x1, x2, leftDistance, rightDistance;
 	for (var i=0;i<E.floor_nodes.length;i++){
 		if(!E.floor_nodes[i-1]){ //if left support node
@@ -130,26 +134,29 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 	}
 }
 
+//Creates a matrix of 2N-3 equations based on the method of joints, and solves it
 function methodOfJoints(){
-	var force_matrix=[];
-	var solution=[];
-	for(var i=0;i<E.nodes.length;i++){
-		var rowX=[];
-		var rowY=[];
-		solution.push(-E.nodes[i].external_force[0]);
-		solution.push(-E.nodes[i].external_force[1]);
-		for(var j=0;j<E.members.length;j++){
+	var force_matrix=[]; //each row will represent an Fx and Fy equation for each node
+	var solution=[]; //this will represent the external forces in the x and y direction acting on the node
+
+	for(var i=0;i<E.nodes.length;i++){ //iterate through all of the nodes that exist
+		var rowX=[]; //will represent the Fx equation for the node
+		var rowY=[]; //will represent the Fy equation for the node
+		solution.push(-E.nodes[i].external_force[0]); //the external forces in the x direction of the node
+		solution.push(-E.nodes[i].external_force[1]); //the external forces in the y direction o fthe noe
+		
+		for(var j=0;j<E.members.length;j++){ //iterate through all of the members that exist
 			E.members[j].calcLength();
 			E.members[j].calcUnitVector();
-			var connected=false;
-			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
-				if(E.members[j]===E.nodes[i].connected_members[k]){
-					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
-					// if(Math.round(E.nodes[i].connected_members[k].x1*100)/100===Math.round(E.nodes[i].left*100)/100 && Math.round(E.nodes[i].connected_members[k].y1*100)/100===Math.round(E.nodes[i].top*100)/100){
+
+			var connected=false; //check if the member is connected to the node
+			for(var k=0;k<E.nodes[i].connected_members.length;k++){ 
+				if(E.members[j]===E.nodes[i].connected_members[k]){ //if the member is connected to the node
+					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){ //if the start of the member is connected to the node
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
 					}
-					else{ //flip the direction so all forces are tensile
+					else{ //if the end of the member is at the node, flip the direction so all forces are tensile
 						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
 					}
@@ -157,14 +164,13 @@ function methodOfJoints(){
 				}
 
 			}
-			if(!connected){
+			if(!connected){ //if the member is not connected to the node, then its not part of its Force equations
 				rowX.push(0);
 				rowY.push(0);
 			}
 		}
 		force_matrix.push(rowX);
 		force_matrix.push(rowY);
-
 	}
 
 	//eliminating last 3 equation since we have 2N equations and have 2N-3 members, thus we have 3 extra equations 
@@ -178,9 +184,10 @@ function methodOfJoints(){
 	var forces=numeric.solve(force_matrix, solution, false); //solving for the forces
 
 	E.designPass=true; //for checking whether a design meets the criteria
-	//applying the force value to the specified member
+	
+	//applying the force value to the specified member, as well as checking if its under the constraints
 	for(i=0;i<E.members.length;i++){
-		E.members[i].setForce(forces[i]);
+		E.members[i].setForce(forces[i],E);
 		if(forces[i]>0 && forces[i]>E.max_tensile){
 			E.designPass=false;
 		}
@@ -190,13 +197,13 @@ function methodOfJoints(){
 	}
 }
 
+//Calculates the cost of the bridge
 function calculateCost(){
 	var bridge_cost=0;
 	for(var i=0;i<E.members.length;i++){
 		var meter_length=E.members[i].member_length/(Grid.grid_size*Grid.grid_meter);
 		bridge_cost+=meter_length*E.member_cost_meter;
 	}
-
 	bridge_cost+=E.nodes.length*E.node_cost;
 	E.currentDesignCost=Math.round(bridge_cost*100)/100;
 	return Math.round(bridge_cost*100)/100;
@@ -210,8 +217,8 @@ module.exports=function (){
 };
 
 },{"./EntityController":3,"./Grid":5}],2:[function(require,module,exports){
+//The car fabric.js object
 var Car = fabric.util.createClass(fabric.Rect, {
-
     type: 'car',
 
     initialize: function(options) {
@@ -220,17 +227,19 @@ var Car = fabric.util.createClass(fabric.Rect, {
         }
 
         this.callSuper('initialize', options);
-        this.set('label', options.label || '');
         
-        //Restricting movement of the car by player to only the x-axis
         this.set({
+            //Restricting movement of the car by player to only the x-axis
             lockMovementY: true,
             lockRotation: true,
             lockScalingX: true,
             lockScalingY: true,
             hasControls: false,
             hasBorders: false,
-            fill: "hsla(123, 51%, 64%, 0.65)"
+            height: options.height || 50,
+            left: options.left ||50,
+            fill: "hsla(123, 51%, 64%, 0.65)",
+            label: options.label || 'Distributed Load'
         }); 
     },
 
@@ -242,10 +251,9 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FFFFFF'; //color of the font
-        ctx.fillText(this.label, -this.width / 4, -this.height / 3+30);
+        ctx.fillText(this.label,  -this.width / 4, -this.height / 3+30); //so the text will position at the center of the car
     }
 });
 
@@ -544,6 +552,7 @@ var EntityController = {
 
 module.exports = EntityController;
 },{"./Grid":5,"./Member":8,"./Node":10}],4:[function(require,module,exports){
+//The pink forceline fabric.js object that shows the reation forces at a node 
 var ForceLine = fabric.util.createClass(fabric.Line, {
     type: 'forceline',
 
@@ -587,6 +596,7 @@ var ForceLine = fabric.util.createClass(fabric.Line, {
 
 module.exports=ForceLine;
 },{}],5:[function(require,module,exports){
+//the grid singleton. Contains all properties about the grid as well as methods to create and resize the grid
 var Grid = {
     canvas: null,
     grid_size: 50,
@@ -627,7 +637,7 @@ var Grid = {
             Grid.canvas.sendToBack(line);
         }
     },
-    calcGridMeter: function(EntityController){
+    calcGridMeter: function(EntityController){ 
         if(EntityController.supportA && EntityController.supportB){
             this.grid_meter=(EntityController.supportB.left-EntityController.supportA.left)/(this.grid_size*EntityController.bridge_length);
         }
@@ -636,67 +646,67 @@ var Grid = {
 
 module.exports = Grid;
 },{}],6:[function(require,module,exports){
+//Handles monitoring changes from the input text fields and applying them to the appropriate controller
+//Also handles import and export events when the buttons are pressed
+
 var EntityController=require('./EntityController');
 var Grid=require('./Grid');
-var Node=require('./Node');
 var Optimizer=require('./Optimizer');
 
 var InputController=function(){
 
 	$('#bridge-length-input').change(function() {
 	    var new_bridge_length = parseInt($(this).val());
-
-	    if (!isNaN(new_bridge_length)) {
+	    if (!isNaN(new_bridge_length)) { //to make sure the input is valid (is an integer)
 	       EntityController.bridge_length=new_bridge_length;
 	    }
 	});
 
 	$('#car-weight-input').change(function() {
 	    var new_car_weight = parseInt($(this).val());
-	    if (!isNaN(new_car_weight)) {
+	    if (!isNaN(new_car_weight)) { //to make sure the input is valid (is an integer)
 	       EntityController.car_weight=new_car_weight;
 	    }
 	});
 
-
 	$('#car-length-input').change(function() {
 	    var new_car_length = parseInt($(this).val());
-	    if (!isNaN(new_car_length)) {
+	    if (!isNaN(new_car_length)) { //to make sure the input is valid (is an integer)
 	       EntityController.car_length=new_car_length;
 	    }
 	});
 
 	$('#max-compressive-input').change(function() {
 	    var max = parseInt($(this).val());
-	    if (!isNaN(max)) {
+	    if (!isNaN(max)) { //to make sure the input is valid (is an integer)
 	       EntityController.max_compressive=max;
 	    }
 	});
 
 	$('#max-tensile-input').change(function() {
 	    var max = parseInt($(this).val());
-	    if (!isNaN(max)) {
+	    if (!isNaN(max)) { //to make sure the input is valid (is an integer)
 	       EntityController.max_tensile=max;
 	    }
 	});
 
 	$('#num-floor-input').change(function() {
 	    var num_floor_nodes = parseInt($(this).val());
-	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) {
+	    if (!isNaN(num_floor_nodes) && num_floor_nodes < 10) { //to make sure the input is valid (is an integer and less than 10)
 	       EntityController.createFloorNodes(num_floor_nodes);
 	    }
 	});
 
 	$('#optimizer_var_input').change(function() {
 	    var variance = parseInt($(this).val());
-	    if (!isNaN(variance) && variance!==0) {
+	    if (!isNaN(variance) && variance!==0) { //to make sure the input is valid (is an integer and non-zero)
 	      	Optimizer.variation=variance;
 	    }
 	});
 
 	$('#optimizer_dur_input').change(function() {
 	    var duration = parseInt($(this).val());
-	    if (!isNaN(duration) && duration >1) {
+	    if (!isNaN(duration) && duration >1) { //to make sure the input is valid (is an integer and greater than 1)
 	       Optimizer.duration=duration;
 	    }
 	});
@@ -704,26 +714,25 @@ var InputController=function(){
 	//Monitors for changes in the grid spacing input field and re-creates the grid if a change is detected
 	$('#grid-size-input').change(function() {
 	    var new_grid_size = parseInt($('#grid-size-input').val());
-
-	    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) {
+	    if (!isNaN(new_grid_size) && new_grid_size > Grid.min_grid_size) { //makes sure the new grid size is an integer and greater than the minimum grid size
 	        Grid.grid_size = new_grid_size;
-	        Grid.createGrid();
+	        Grid.createGrid(); //recreates the grid with the new specified grid size
 	    }
 	});
 
 	$('#exportBtn').click(function() {
-		jsonStr = JSON.stringify(EntityController.export());
-		$('#export-cont').val(jsonStr);
-		$('#uniqueHash').val(EntityController.exportHash(jsonStr));
+		jsonStr = JSON.stringify(EntityController.export()); //export the entity controller as a string
+		$('#export-cont').val(jsonStr); //paste the string in the export field
+		$('#uniqueHash').val(EntityController.exportHash(jsonStr)); //hash the output and paste it in the hash input field
 		return false;
 	});
 
 	$('#importBtn').click(function() {
-		jsonStr = $('#export-cont').val();
-		if (jsonStr.length > 0) {
-			if (jsonStr.charAt(1) == 'A') {
+		jsonStr = $('#export-cont').val(); //stores the value of the import text field
+		if (jsonStr.length > 0) { //makes sure its not empty
+			if (jsonStr.charAt(1) == 'A') { //if the input is a hash
 				EntityController.importHash(jsonStr);
-			} else {
+			} else { //if the input is not hashed
 				jsonObj = JSON.parse(jsonStr);
 				EntityController.import(jsonObj);
 			}
@@ -731,6 +740,7 @@ var InputController=function(){
 		return false;
 	});
 
+	//selects all of the text on click of the export and hash input fields
 	$('#export-cont').click(function () {
 		this.select();
 	});
@@ -739,10 +749,10 @@ var InputController=function(){
 	});
 };
 
-
-
 module.exports=InputController;
-},{"./EntityController":3,"./Grid":5,"./Node":10,"./Optimizer":11}],7:[function(require,module,exports){
+},{"./EntityController":3,"./Grid":5,"./Optimizer":11}],7:[function(require,module,exports){
+//Handles canvas interaction from the user, including movemnet of nodes, car, and erasing
+
 var Node = require('./Node');
 var Member = require('./Member');
 var Car = require('./Car');
@@ -823,7 +833,9 @@ module.exports = function(canvas, ModeController) {
                     canvas.add(ModeController.new_member);
                 }
             }
-        } else if (ModeController.mode === 'erase' && !ModeController.simulation && event.target) {
+        } 
+        //erasing a node as well as all of its connected members
+        else if (ModeController.mode === 'erase' && !ModeController.simulation && event.target && event.target.type==='node') { //if not in simulation mode and clicked on a node
             var nodeToRemove = event.target;
             if (!nodeToRemove.support && !nodeToRemove.floor_beam) { //if a regular node, allow deletion
                 var membersToRemove = [];
@@ -867,21 +879,18 @@ module.exports = function(canvas, ModeController) {
             }
         }
     });
-
-    //Handles erasing nodes and members, as well as placing members
-    canvas.on('object:selected', function(event) {
-
-    });
-
+    
+    //changes the color of an object to red when hovered over during erase mode
     canvas.on('mouse:over', function(e) {
-        if (ModeController.mode === 'erase' && !ModeController.simulation) {
+        if (ModeController.mode === 'erase' && !ModeController.simulation && e.target && e.target.type==='node') {
             e.target.setFill(EntityController.erase_fill);
             canvas.renderAll();
         }
     });
 
+    //sets the color back
     canvas.on('mouse:out', function(e) {
-        if (ModeController.mode === 'erase' && !ModeController.simulation) {
+        if (ModeController.mode === 'erase' && !ModeController.simulation && e.target.type==='node') {
             e.target.setFill(EntityController.node_fill);
             canvas.renderAll();
         }
@@ -968,8 +977,7 @@ module.exports = function(canvas, ModeController) {
     });
 };
 },{"./Calculate":1,"./Car":2,"./EntityController":3,"./Grid":5,"./Member":8,"./Node":10,"./Optimizer":11}],8:[function(require,module,exports){
-// var E=require('./EntityController');
-
+//member fabric.js object that represents the individual members of the truss
 var Member = fabric.util.createClass(fabric.Line, {
     type: 'member',
 
@@ -980,7 +988,6 @@ var Member = fabric.util.createClass(fabric.Line, {
 
         this.callSuper('initialize', options);
 
-        //settings default values of the most important properties
         this.set({
             fill: 'blue',
             stroke: 'hsla(243, 0%,50%, 1)',
@@ -994,8 +1001,6 @@ var Member = fabric.util.createClass(fabric.Line, {
             x2: options.x2 || -100,
             y2: options.y2 || -100,
             label: options.label || '',
-            max_tensile: 12,
-            max_compressive: 8,
             force:null,
             member_length: null,
             unit_vector: [],
@@ -1016,8 +1021,7 @@ var Member = fabric.util.createClass(fabric.Line, {
     _render: function(ctx) {
         this.callSuper('_render', ctx);
         if (this.force !== null) {
-            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            // ctx.fillRect(-10, -8, 80, 28);
+            // ctx.fillRect(-10, -8, 80, 28); //shows a white rectangle behind the force
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(53, 100%, 24%, 1)'; //color of the font
             ctx.fillText(this.label, 0,20);
@@ -1025,15 +1029,18 @@ var Member = fabric.util.createClass(fabric.Line, {
     }
 });
 
+//calculates the length of the member in pixels for cost calculations
 Member.prototype.calcLength=function(){
     this.member_length=Math.sqrt((this.x2-this.x1)*(this.x2-this.x1)+(this.y2-this.y1)*(this.y2-this.y1));
 };
 
+//calculates the unit vector of the member (length needs to be calculated first, so calcLength() should be called before hand)
 Member.prototype.calcUnitVector=function(){
     this.unit_vector[0]=(this.x2-this.x1)/this.member_length;
     this.unit_vector[1]=(this.y2-this.y1)/this.member_length;
 };
 
+//for the import functionality, takes in a json singleton representing a member, and applies its properties to the current member
 Member.prototype.copyProp=function(memberObj) {
     var impAttr = ['x1', 'x2', 'y1', 'y2'];
     for (var i in impAttr) {
@@ -1046,12 +1053,14 @@ Member.prototype.copyProp=function(memberObj) {
     this.member_length = Math.sqrt(this.width*this.width+this.height*this.height);
 };
 
+//checks if a node is the start node of the member
 Member.prototype.isStartNode=function(nodeObj) {
     if (Math.round(nodeObj.left*100)/100 == Math.round(this.x1*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y1*100)/100)
         return true;
     return false;
 };
 
+//checks if a node is the end node of the member
 Member.prototype.isEndNode=function(nodeObj) {
     if (Math.round(nodeObj.left*100)/100 == Math.round(this.x2*100)/100 && Math.round(nodeObj.top*100)/100 == Math.round(this.y2*100)/100)
         return true;
@@ -1060,25 +1069,26 @@ Member.prototype.isEndNode=function(nodeObj) {
 
 module.exports=Member;
 
-Member.prototype.setForce=function(x){
+//sets the force of the member as well as sets the proper color based on if its under compression or tension, as well as how close it is to its maximum tension or compression
+Member.prototype.setForce=function(x,EntityController){
     this.force=x;
     var percentMax;
     if(x<0){ //if the force is compressive
-        percentMax=-x*100/this.max_compressive;
+        percentMax=-x*100/EntityController.max_compressive;
         if(percentMax>100){ //if the force exceeded compressive tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(360, '+(percentMax*0.5+50)+'%,50%, 1)';
+            this.stroke='hsla(360, '+(percentMax*0.8+20)+'%,50%, 1)';
         }
     }
     else if(x>0){ //if the force is tensile
-        percentMax=x*100/this.max_tensile;
+        percentMax=x*100/EntityController.max_tensile;
         if(percentMax>100){ //if the force exceeded maximum tensile force
             this.stroke='hsla(65, 100%, 60%, 1)';
         }
         else{
-            this.stroke='hsla(243, '+(percentMax*0.5+50)+'%,50%, 1)';
+            this.stroke='hsla(243, '+(percentMax*0.8+20)+'%,50%, 1)';
         }
     }
     else{
@@ -1097,7 +1107,7 @@ var EntityController = require('./EntityController.js');
 var Calculate=require('./Calculate');
 var Car=require('./Car');
 var Grid=require('./Grid');
-//Controls the current mode
+
 var ModeController={
 	canvas: null,
 	mode: 'move',
@@ -1107,7 +1117,7 @@ var ModeController={
 	show_node_coords: false,
 	max_spacing:false,
 
-	enableMaxSpacing:function() {
+	enableMaxSpacing:function() { //max spacing that doesnt let any of the floor nodes get farther than 3m
 		this.max_spacing = !this.max_spacing;
 		if (this.max_spacing) {
 			$('#max-spacing-button').text("Disable Max Spacing");
@@ -1115,12 +1125,14 @@ var ModeController={
 			$('#max-spacing-button').text('Enable Max Spacing');
 		}
 	},
+	//positions the car to the exact middle of the bridge
 	carToMiddle:function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
 		EntityController.car.left=gridMeter*7.5+EntityController.car_length_px/2.4;
 		Calculate();
 		Grid.canvas.renderAll();
 	},
+	//shows the coordinates of all the nodes
 	showNodeCoords:function() {
 		this.show_node_coords = !this.show_node_coords;
 		for (var i in EntityController.nodes) {
@@ -1133,6 +1145,7 @@ var ModeController={
 		}
 		Grid.canvas.renderAll();
 	},
+	//updates the distance between each of the floor nodes
 	updateNodeDistance: function() {
 		var gridMeter = (EntityController.supportB.left-EntityController.supportA.left)/15;
 		var text = "• ";
@@ -1141,7 +1154,6 @@ var ModeController={
 					text += (Math.round(((EntityController.floor_nodes[i].left-EntityController.floor_nodes[i-1].left)/gridMeter)*100)/100) + ' • ';
 			}
 		}
-
 		$('#floorNodeDist').text(text);
 	},
 	setButtonStates:function() {
@@ -1206,18 +1218,21 @@ var ModeController={
 			ModeController.new_member=null;
 		}
 	},
+	//activates erase mode
 	erase_mode:function(){
 		this.mode='erase';
 		this.clearNode();
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates erase mode
 	move_mode:function(){
 		this.mode='move';
 		this.clearNode();
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates simulation mode
 	simulation_mode:function(){
 		this.simulation=!this.simulation;
 		if(this.simulation){
@@ -1228,13 +1243,9 @@ var ModeController={
 	        } else if (!EntityController.car) { //if the car object doesnt exist yet
 	            var car = new Car({
 	                width: EntityController.car_length * Grid.grid_meter * Grid.grid_size,
-	                height: Grid.grid_size,
-	                left: 50,
-	                top: Grid.canvas.getHeight() / 3 - 40,
-	                label: 'Distributed Load',
-	                length: EntityController.car_length,
-	                weight: EntityController.car_weight
+	                top: Grid.canvas.getHeight() / 3 - 40
 	            });
+
 	            EntityController.car = car;
 	            Grid.canvas.add(car);
 	            Calculate();
@@ -1258,6 +1269,7 @@ var ModeController={
 		this.clearMember();
 		this.setButtonStates();
 	},
+	//activates add member mode
 	add_member_mode:function(){
 		this.clearNode(); //gets rid of any existing unplaced nodes
 
@@ -1268,6 +1280,7 @@ var ModeController={
 		}
 		this.setButtonStates();
 	},
+	//actiavates add node mode
 	add_node_mode:function(){
 		this.clearMember(); //gets rid of any existing unplaced members
 
@@ -1280,6 +1293,7 @@ var ModeController={
 	}
 };
 
+//event handles for setting the different modes based on the buttons the user presses
 $('#eraser-button').on('click',function () {
 	ModeController.erase_mode();
 });
@@ -1305,7 +1319,7 @@ $('#max-spacing-button').on('click', function() {
 module.exports=ModeController;
 
 },{"./Calculate":1,"./Car":2,"./EntityController.js":3,"./Grid":5,"./Member":8,"./Node":10}],10:[function(require,module,exports){
-var ForceLine=require('./ForceLine');
+var ForceLine=require('./ForceLine'); //node deligates forceline
 
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
@@ -1329,10 +1343,10 @@ var Node = fabric.util.createClass(fabric.Circle, {
             selectable: options.selectable || true,
             hasControls: false,
             hasBorders: false,
-            support: options.support || false,
-            floor_beam: options.floor_beam || false,
-            external_force: [0,0],
-            connected_members: []
+            support: options.support || false, //if the node is a support (and thus is a floor beam as well)
+            floor_beam: options.floor_beam || false, //if the node is a floor beam
+            external_force: [0,0], //the reaction forces acting on the floor beam
+            connected_members: [] //the members that are connected to the floor beam
         });
     },
     
@@ -1347,15 +1361,14 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-        var yOff;
+        var yOff; //for positioning the coordinates of the node properly so its visible
         if (this.floor_beam) {
             yOff = -30;
         } else {
             yOff = 12;
         }
         if (this.showCoords) {
-            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            // ctx.fillRect(-10, yOff, 150, 22);
+            // ctx.fillRect(-10, yOff, 150, 22); //will show a white rectangle background around the coordinates of the node
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(87, 100%, 24%, 1)'; //color of the font
             ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
@@ -1363,6 +1376,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
     }
 });
 
+//for the import, takes in a json singleton representing a node and applies it to the current node object
 Node.prototype.copyProp=function(nodeObj) {
     this.top = nodeObj.top;
     this.left = nodeObj.left;
@@ -1383,9 +1397,8 @@ Node.prototype.copyProp=function(nodeObj) {
 };
 
 module.exports=Node;
-var E=require('./EntityController');
 
-//functions for car
+var E=require('./EntityController'); //since the entity controller is only required for the prototypes
 
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
@@ -1410,8 +1423,8 @@ Node.prototype.moveMembers = function(canvas) {
     }
 };
 
+//set the reaction force of the node
 Node.prototype.setForce=function(x,y,canvas){
-
     this.external_force[0]=x || 0;
     this.external_force[1]=y || 0;
     roundedX=Math.round(x*100)/100;
@@ -1437,6 +1450,7 @@ Node.prototype.setForce=function(x,y,canvas){
     }
 };
 
+//checks if the car is on the node
 Node.prototype.isCarOn=function(){
     if(E.car){
         if(this.left>=E.car.left-E.car_length_px/2 && this.left<=E.car.left+E.car_length_px/2){
@@ -1448,6 +1462,9 @@ Node.prototype.isCarOn=function(){
 
 
 },{"./EntityController":3,"./ForceLine":4}],11:[function(require,module,exports){
+/*An optimizer function that works by randomly placing all non-floor nodes of a current design a certain radius r defined by the
+variation property. It iterates for a certain duration, and saves the design that has the lowest cost*/
+
 var EntityController=require('./EntityController');
 var Calculate=require('./Calculate');
 var Grid=require('./Grid');
@@ -1489,8 +1506,8 @@ var Optimizer={
 		var startTime=Date.now();
 
 		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
+			//randomizing position of all floor nodes around a radius specified by the variation property
 			for(i=0;i<non_floor_nodes.length;i++){
-				//randomizing position of all floor nodes
 				if(Math.round(Math.random())===1){
 					non_floor_nodes[i].left=starting_positions[i][0]+this.variation*Math.random();
 					if(Math.round(Math.random())===1){
@@ -1509,11 +1526,13 @@ var Optimizer={
 						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
-				non_floor_nodes[i].moveMembers(null);
+				non_floor_nodes[i].moveMembers(null); //null so that the changes dont display on the canvas
 			}
 				
 			Calculate();
-			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
+
+			//if the design passes and is lower than the cost of the current design, save its node positions
+			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ 
 				this.optimal_positions=[];
 				this.min_cost=EntityController.currentDesignCost;
 				for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
@@ -1523,7 +1542,7 @@ var Optimizer={
 			}
 			this.iteration_number++;
 		}
-		if(this.optimal_positions.length===0){
+		if(this.optimal_positions.length===0){ //if no cheaper designs were found and the initial design before the optimizer started failed
 			console.log('No solutions found after '+this.iteration_number+" iterations");
 			alert('No solutions found after '+this.iteration_number+" iterations");
 		}
@@ -1541,12 +1560,14 @@ var Optimizer={
 			console.log('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			alert('Best Solution found costs $'+this.min_cost+" after running "+this.iteration_number+" iterations");
 			Calculate();
+			Grid.canvas.renderAll();
 		}
 	}
 };
 
 module.exports=Optimizer;
 },{"./Calculate":1,"./EntityController":3,"./Grid":5}],12:[function(require,module,exports){
+//Handles the inital resizing of the canvas as well as the resizing of the canvas when the window is resized
 var ResizeController={
 	canvas: null,
 	grid: null,
@@ -1584,9 +1605,11 @@ module.exports=ResizeController;
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: false
   });
+
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
   
+  //initialization
   ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;
@@ -1596,7 +1619,7 @@ module.exports=ResizeController;
   InteractionController(canvas, ModeController);
   InputController();
 
-  var num_floor_beams=1;
+  var num_floor_beams=4;
 
   EntityController.createFloorNodes(num_floor_beams);
 

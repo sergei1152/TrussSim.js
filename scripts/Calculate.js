@@ -1,9 +1,12 @@
+//Performs the cost and force calculation of the truss
 var E=require('./EntityController');
 var Grid=require('./Grid');
 
+//Calculating the support reactions at the 2 support nodes using moments
 function calculateSupportReactions(){
 	Grid.calcGridMeter(E);
 	E.calcCarLengthPx();
+
 	E.car.width=E.car_length_px; //recalculating the car width for the canvas
 	var bridge_length_px=E.bridge_length*Grid.grid_size*Grid.grid_meter; //converting bridge length in meters to pixels
 	var actual_weight;
@@ -32,7 +35,8 @@ function calculateSupportReactions(){
 	E.supportB.setForce(0,(actual_weight*(distance_a_centroid_px))/(bridge_length_px) || 0,Grid.canvas);
 }
 
-function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes touched
+//Calculates the reaction force at the nodes that the car is on using moments
+function calculateWeightDistributionOfCar(){ 
 	var x, x1, x2, leftDistance, rightDistance;
 	for (var i=0;i<E.floor_nodes.length;i++){
 		if(!E.floor_nodes[i-1]){ //if left support node
@@ -129,26 +133,29 @@ function calculateWeightDistributionOfCar(){ //TODO: Add case for when no nodes 
 	}
 }
 
+//Creates a matrix of 2N-3 equations based on the method of joints, and solves it
 function methodOfJoints(){
-	var force_matrix=[];
-	var solution=[];
-	for(var i=0;i<E.nodes.length;i++){
-		var rowX=[];
-		var rowY=[];
-		solution.push(-E.nodes[i].external_force[0]);
-		solution.push(-E.nodes[i].external_force[1]);
-		for(var j=0;j<E.members.length;j++){
+	var force_matrix=[]; //each row will represent an Fx and Fy equation for each node
+	var solution=[]; //this will represent the external forces in the x and y direction acting on the node
+
+	for(var i=0;i<E.nodes.length;i++){ //iterate through all of the nodes that exist
+		var rowX=[]; //will represent the Fx equation for the node
+		var rowY=[]; //will represent the Fy equation for the node
+		solution.push(-E.nodes[i].external_force[0]); //the external forces in the x direction of the node
+		solution.push(-E.nodes[i].external_force[1]); //the external forces in the y direction o fthe noe
+		
+		for(var j=0;j<E.members.length;j++){ //iterate through all of the members that exist
 			E.members[j].calcLength();
 			E.members[j].calcUnitVector();
-			var connected=false;
-			for(var k=0;k<E.nodes[i].connected_members.length;k++){ //check if the node has any of the conencted members
-				if(E.members[j]===E.nodes[i].connected_members[k]){
-					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){
-					// if(Math.round(E.nodes[i].connected_members[k].x1*100)/100===Math.round(E.nodes[i].left*100)/100 && Math.round(E.nodes[i].connected_members[k].y1*100)/100===Math.round(E.nodes[i].top*100)/100){
+
+			var connected=false; //check if the member is connected to the node
+			for(var k=0;k<E.nodes[i].connected_members.length;k++){ 
+				if(E.members[j]===E.nodes[i].connected_members[k]){ //if the member is connected to the node
+					if(E.nodes[i].connected_members[k].x1===E.nodes[i].left && E.nodes[i].connected_members[k].y1===E.nodes[i].top){ //if the start of the member is connected to the node
 						rowX.push(-E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(-E.nodes[i].connected_members[k].unit_vector[1]);
 					}
-					else{ //flip the direction so all forces are tensile
+					else{ //if the end of the member is at the node, flip the direction so all forces are tensile
 						rowX.push(E.nodes[i].connected_members[k].unit_vector[0]);
 						rowY.push(E.nodes[i].connected_members[k].unit_vector[1]);
 					}
@@ -156,14 +163,13 @@ function methodOfJoints(){
 				}
 
 			}
-			if(!connected){
+			if(!connected){ //if the member is not connected to the node, then its not part of its Force equations
 				rowX.push(0);
 				rowY.push(0);
 			}
 		}
 		force_matrix.push(rowX);
 		force_matrix.push(rowY);
-
 	}
 
 	//eliminating last 3 equation since we have 2N equations and have 2N-3 members, thus we have 3 extra equations 
@@ -177,9 +183,10 @@ function methodOfJoints(){
 	var forces=numeric.solve(force_matrix, solution, false); //solving for the forces
 
 	E.designPass=true; //for checking whether a design meets the criteria
-	//applying the force value to the specified member
+	
+	//applying the force value to the specified member, as well as checking if its under the constraints
 	for(i=0;i<E.members.length;i++){
-		E.members[i].setForce(forces[i]);
+		E.members[i].setForce(forces[i],E);
 		if(forces[i]>0 && forces[i]>E.max_tensile){
 			E.designPass=false;
 		}
@@ -189,13 +196,13 @@ function methodOfJoints(){
 	}
 }
 
+//Calculates the cost of the bridge
 function calculateCost(){
 	var bridge_cost=0;
 	for(var i=0;i<E.members.length;i++){
 		var meter_length=E.members[i].member_length/(Grid.grid_size*Grid.grid_meter);
 		bridge_cost+=meter_length*E.member_cost_meter;
 	}
-
 	bridge_cost+=E.nodes.length*E.node_cost;
 	E.currentDesignCost=Math.round(bridge_cost*100)/100;
 	return Math.round(bridge_cost*100)/100;

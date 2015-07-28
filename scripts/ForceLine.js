@@ -1,3 +1,4 @@
+//The pink forceline fabric.js object that shows the reation forces at a node 
 var ForceLine = fabric.util.createClass(fabric.Line, {
     type: 'forceline',
 

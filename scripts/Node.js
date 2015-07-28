@@ -1,4 +1,4 @@
-var ForceLine=require('./ForceLine');
+var ForceLine=require('./ForceLine'); //node deligates forceline
 
 var Node = fabric.util.createClass(fabric.Circle, {
     type: 'node',
@@ -22,10 +22,10 @@ var Node = fabric.util.createClass(fabric.Circle, {
             selectable: options.selectable || true,
             hasControls: false,
             hasBorders: false,
-            support: options.support || false,
-            floor_beam: options.floor_beam || false,
-            external_force: [0,0],
-            connected_members: []
+            support: options.support || false, //if the node is a support (and thus is a floor beam as well)
+            floor_beam: options.floor_beam || false, //if the node is a floor beam
+            external_force: [0,0], //the reaction forces acting on the floor beam
+            connected_members: [] //the members that are connected to the floor beam
         });
     },
     
@@ -40,15 +40,14 @@ var Node = fabric.util.createClass(fabric.Circle, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-        var yOff;
+        var yOff; //for positioning the coordinates of the node properly so its visible
         if (this.floor_beam) {
             yOff = -30;
         } else {
             yOff = 12;
         }
         if (this.showCoords) {
-            // ctx.fillStyle = 'hsla(0, 100%, 100%, 1)'; //color of the font
-            // ctx.fillRect(-10, yOff, 150, 22);
+            // ctx.fillRect(-10, yOff, 150, 22); //will show a white rectangle background around the coordinates of the node
             ctx.font = '20px Arial';
             ctx.fillStyle = 'hsla(87, 100%, 24%, 1)'; //color of the font
             ctx.fillText('('+Math.round(this.left*100)/100+', ' +Math.round(this.top*100)/100+')', 12,yOff+18);
@@ -56,6 +55,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
     }
 });
 
+//for the import, takes in a json singleton representing a node and applies it to the current node object
 Node.prototype.copyProp=function(nodeObj) {
     this.top = nodeObj.top;
     this.left = nodeObj.left;
@@ -76,9 +76,8 @@ Node.prototype.copyProp=function(nodeObj) {
 };
 
 module.exports=Node;
-var E=require('./EntityController');
 
-//functions for car
+var E=require('./EntityController'); //since the entity controller is only required for the prototypes
 
 //Moves the connected members of the node to its position
 Node.prototype.moveMembers = function(canvas) {
@@ -103,8 +102,8 @@ Node.prototype.moveMembers = function(canvas) {
     }
 };
 
+//set the reaction force of the node
 Node.prototype.setForce=function(x,y,canvas){
-
     this.external_force[0]=x || 0;
     this.external_force[1]=y || 0;
     roundedX=Math.round(x*100)/100;
@@ -130,6 +129,7 @@ Node.prototype.setForce=function(x,y,canvas){
     }
 };
 
+//checks if the car is on the node
 Node.prototype.isCarOn=function(){
     if(E.car){
         if(this.left>=E.car.left-E.car_length_px/2 && this.left<=E.car.left+E.car_length_px/2){

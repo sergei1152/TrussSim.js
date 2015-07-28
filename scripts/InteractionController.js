@@ -1,3 +1,5 @@
+//Handles canvas interaction from the user, including movemnet of nodes, car, and erasing
+
 var Node = require('./Node');
 var Member = require('./Member');
 var Car = require('./Car');
@@ -78,7 +80,9 @@ module.exports = function(canvas, ModeController) {
                     canvas.add(ModeController.new_member);
                 }
             }
-        } else if (ModeController.mode === 'erase' && !ModeController.simulation && event.target) {
+        } 
+        //erasing a node as well as all of its connected members
+        else if (ModeController.mode === 'erase' && !ModeController.simulation && event.target && event.target.type==='node') { //if not in simulation mode and clicked on a node
             var nodeToRemove = event.target;
             if (!nodeToRemove.support && !nodeToRemove.floor_beam) { //if a regular node, allow deletion
                 var membersToRemove = [];
@@ -122,21 +126,18 @@ module.exports = function(canvas, ModeController) {
             }
         }
     });
-
-    //Handles erasing nodes and members, as well as placing members
-    canvas.on('object:selected', function(event) {
-
-    });
-
+    
+    //changes the color of an object to red when hovered over during erase mode
     canvas.on('mouse:over', function(e) {
-        if (ModeController.mode === 'erase' && !ModeController.simulation) {
+        if (ModeController.mode === 'erase' && !ModeController.simulation && e.target && e.target.type==='node') {
             e.target.setFill(EntityController.erase_fill);
             canvas.renderAll();
         }
     });
 
+    //sets the color back
     canvas.on('mouse:out', function(e) {
-        if (ModeController.mode === 'erase' && !ModeController.simulation) {
+        if (ModeController.mode === 'erase' && !ModeController.simulation && e.target.type==='node') {
             e.target.setFill(EntityController.node_fill);
             canvas.renderAll();
         }

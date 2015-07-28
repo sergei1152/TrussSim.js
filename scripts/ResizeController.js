@@ -1,3 +1,4 @@
+//Handles the inital resizing of the canvas as well as the resizing of the canvas when the window is resized
 var ResizeController={
 	canvas: null,
 	grid: null,

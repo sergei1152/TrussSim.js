@@ -1,3 +1,6 @@
+/*An optimizer function that works by randomly placing all non-floor nodes of a current design a certain radius r defined by the
+variation property. It iterates for a certain duration, and saves the design that has the lowest cost*/
+
 var EntityController=require('./EntityController');
 var Calculate=require('./Calculate');
 var Grid=require('./Grid');
@@ -39,8 +42,8 @@ var Optimizer={
 		var startTime=Date.now();
 
 		while(Date.now()-startTime<this.duration*1000){ //while the time elapsed is less than the duration
+			//randomizing position of all floor nodes around a radius specified by the variation property
 			for(i=0;i<non_floor_nodes.length;i++){
-				//randomizing position of all floor nodes
 				if(Math.round(Math.random())===1){
 					non_floor_nodes[i].left=starting_positions[i][0]+this.variation*Math.random();
 					if(Math.round(Math.random())===1){
@@ -59,11 +62,13 @@ var Optimizer={
 						non_floor_nodes[i].top=starting_positions[i][1]-this.variation*Math.random();
 					}
 				}
-				non_floor_nodes[i].moveMembers(null);
+				non_floor_nodes[i].moveMembers(null); //null so that the changes dont display on the canvas
 			}
 				
 			Calculate();
-			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ //if the design passes
+
+			//if the design passes and is lower than the cost of the current design, save its node positions
+			if(EntityController.designPass && EntityController.currentDesignCost<this.min_cost){ 
 				this.optimal_positions=[];
 				this.min_cost=EntityController.currentDesignCost;
 				for(i=0;i<non_floor_nodes.length;i++){ //saving the optimal positions of the starting nodes
@@ -73,7 +78,7 @@ var Optimizer={
 			}
 			this.iteration_number++;
 		}
-		if(this.optimal_positions.length===0){
+		if(this.optimal_positions.length===0){ //if no cheaper designs were found and the initial design before the optimizer started failed
 			console.log('No solutions found after '+this.iteration_number+" iterations");
 			alert('No solutions found after '+this.iteration_number+" iterations");
 		}

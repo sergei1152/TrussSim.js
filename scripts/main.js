@@ -8,9 +8,11 @@
   var canvas = new fabric.Canvas('truss-canvas', {
       selection: false
   });
+
    //So that all fabric objects have an origin along the center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
   
+  //initialization
   ModeController.canvas = canvas;
   Grid.canvas = canvas;
   ResizeController.canvas = canvas;
@@ -20,7 +22,7 @@
   InteractionController(canvas, ModeController);
   InputController();
 
-  var num_floor_beams=1;
+  var num_floor_beams=4;
 
   EntityController.createFloorNodes(num_floor_beams);
 

@@ -1,5 +1,5 @@
+//The car fabric.js object
 var Car = fabric.util.createClass(fabric.Rect, {
-
     type: 'car',
 
     initialize: function(options) {
@@ -8,17 +8,19 @@ var Car = fabric.util.createClass(fabric.Rect, {
         }
 
         this.callSuper('initialize', options);
-        this.set('label', options.label || '');
         
-        //Restricting movement of the car by player to only the x-axis
         this.set({
+            //Restricting movement of the car by player to only the x-axis
             lockMovementY: true,
             lockRotation: true,
             lockScalingX: true,
             lockScalingY: true,
             hasControls: false,
             hasBorders: false,
-            fill: "hsla(123, 51%, 64%, 0.65)"
+            height: options.height || 50,
+            left: options.left ||50,
+            fill: "hsla(123, 51%, 64%, 0.65)",
+            label: options.label || 'Distributed Load'
         }); 
     },
 
@@ -30,10 +32,9 @@ var Car = fabric.util.createClass(fabric.Rect, {
 
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-
         ctx.font = '20px Arial';
         ctx.fillStyle = '#FFFFFF'; //color of the font
-        ctx.fillText(this.label, -this.width / 4, -this.height / 3+30);
+        ctx.fillText(this.label,  -this.width / 4, -this.height / 3+30); //so the text will position at the center of the car
     }
 });
 
