@@ -4,8 +4,8 @@
 ![alt text](https://github.com/sergei1152/TrussSim.js/blob/master/screenshots/simulation_mode.png "Simulation Example")
 
 ###Supported Browsers
-Chrome (Recommended)
-IE (Not Recommended)
+- Chrome (Recommended)
+- IE (Not Recommended)
 
 ###Contributors
 - [Serj Babayan](https://github.com/sergei1152)
